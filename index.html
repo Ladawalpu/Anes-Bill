@@ -436,7 +436,10 @@ async function api(action, data){
   const res = await fetch(settings.api, {method:"POST", body: JSON.stringify(Object.assign({action, pin:settings.pin}, data))});
   if (!res.ok) throw new Error("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ("+res.status+")");
   const j = await res.json();
-  if (!j.ok) throw new Error(j.error || "เกิดข้อผิดพลาด");
+  if (!j.ok){
+    if (/PIN/.test(j.error||"") && !S.pinAsked && $("#ov").hidden){ S.pinAsked=true; setTimeout(()=>openSettings(settings.pin?"รหัสทีม (APP PIN) ไม่ถูกต้อง กรุณาใส่รหัสใหม่":"กรุณาใส่รหัสทีม (APP PIN) ก่อนใช้งาน ขอรหัสได้จากหัวหน้า", true),0); }
+    throw new Error(j.error || "เกิดข้อผิดพลาด");
+  }
   return j.data;
 }
 const EDITABLE = ["pending","returned"];
@@ -959,13 +962,13 @@ function renderWho(){
   w.innerHTML = `<span class="av">${nm?esc([...nm][0]):"?"}</span><span>${esc(nm||"ตั้งชื่อผู้ใช้")}${settings.room?" · "+esc(settings.room):""}</span>`;
   $("#demoBanner").hidden = isLive();
 }
-function openSettings(msg){
+function openSettings(msg, focusPin){
   openModal(`<h3>ตั้งค่า</h3>${msg?`<div class="w warn" style="margin-bottom:10px">${esc(msg)}</div>`:""}
   <div class="stack">
     <label class="field"><span class="label">ชื่อ (แสดงเป็นผู้ส่ง / ผู้คีย์)</span><input class="input" id="stName" value="${esc(settings.name)}" placeholder="เช่น ปุ๊ วสญ."></label>
     <label class="field"><span class="label">จุดประจำ (ค่าเริ่มต้นของฟอร์ม)</span><select class="input" id="stRoom"><option value="">— ไม่ระบุ —</option>${ROOMS.map(r=>`<option ${r===settings.room?"selected":""}>${esc(r)}</option>`).join("")}</select></label>
     <label class="row" style="gap:10px"><input type="checkbox" id="stNs" ${settings.copyNoSpace?"checked":""} style="width:18px;height:18px"> <span>ปุ่มคัดลอกรหัส ตัดช่องว่างออก (70 110 → 70110)</span></label>
-    <details ${isLive()?"":"open"}><summary style="cursor:pointer;font-weight:600">การเชื่อมต่อ (ผู้ดูแลระบบ)</summary>
+    <details ${!isLive()||!settings.pin||focusPin?"open":""}><summary style="cursor:pointer;font-weight:600">การเชื่อมต่อ (ลิงก์และรหัสทีม)</summary>
       <div class="stack" style="margin-top:10px">
         <label class="field"><span class="label">ลิงก์ Apps Script Web App</span><input class="input mono" id="stApi" value="${esc(settings.api)}" placeholder="https://script.google.com/macros/s/…/exec" style="font-size:13px"></label>
         <label class="field"><span class="label">รหัสทีม (APP PIN)</span><input class="input mono" id="stPin" type="password" value="${esc(settings.pin)}" autocomplete="off"></label>
@@ -973,12 +976,13 @@ function openSettings(msg){
       </div></details>
   </div>
   <div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn" data-close>ปิด</button><button class="btn primary" id="stSave">บันทึก</button></div>`);
-  $("#stSave").onclick=async()=>{
+  if (focusPin) setTimeout(()=>{ const el=$("#stPin"); if(el){ el.focus(); el.setAttribute("aria-invalid","true"); } },50);
+  $("#stSave").onclick=async()=>{ S.pinAsked=false;
     settings.name=$("#stName").value.trim(); settings.room=$("#stRoom").value; settings.copyNoSpace=$("#stNs").checked;
-    const api0=settings.api; settings.api=$("#stApi").value.trim(); settings.pin=$("#stPin").value;
+    const api0=settings.api, pin0=settings.pin; settings.api=$("#stApi").value.trim(); settings.pin=$("#stPin").value;
     lsSet("ab_settings",settings); closeModal(); renderWho();
     if (settings.room && !S.draft.id && !S.draft.hn){ S.draft.room=settings.room; S.draft.caseNo=""; saveDraft(); }
-    if (settings.api && settings.api!==api0){ try{ await api("ping"); toast("เชื่อมต่อสำเร็จ"); await loadConfig(); }catch(e){ toast("เชื่อมต่อไม่ได้: "+e.message); } }
+    if (settings.api && (settings.api!==api0 || settings.pin!==pin0)){ try{ await api("ping"); toast("เชื่อมต่อสำเร็จ"); await loadConfig(); }catch(e){ toast("เชื่อมต่อไม่ได้: "+e.message); } }
     else toast("บันทึกแล้ว");
     setTab(S.tab);
   };
@@ -997,7 +1001,7 @@ setInterval(()=>{ if(document.visibilityState!=="visible" || !$("#ov").hidden) r
   await loadConfig();
   if (!ROOMS.includes(S.draft.room)) S.draft.room=settings.room||ROOMS[0];
   setTab(S.tab); refreshBadge();
-  if (isLive() && !settings.name) openSettings("ยินดีต้อนรับ ใส่ชื่อและจุดประจำก่อนเริ่มใช้งาน");
+  if (isLive() && !settings.name) openSettings("ยินดีต้อนรับ ใส่ชื่อ จุดประจำ และรหัสทีม (APP PIN) ก่อนเริ่มใช้งาน");
 })();
 try{ if ("serviceWorker" in navigator && location.protocol==="https:" && !/claude|claudeusercontent/.test(location.hostname)) navigator.serviceWorker.register("sw.js").catch(()=>{}); }catch(e){}
 </script>
