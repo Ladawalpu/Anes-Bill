@@ -1,0 +1,995 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2284AD">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+<title>AnesBill</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap">
+<style>
+/* Layout: sticky app bar + tabs; phone = one column with a sticky action bar, desktop = form | picker (sender) and queue | worksheet (keyer). */
+:root{
+  --bg:#eef3f6; --surface:#ffffff; --surface2:#f5f8fa; --ink:#13202a; --muted:#566874; --line:#d3dee5;
+  --accent:#2284AD; --accent-soft:#e0eff7; --accent-ink:#ffffff; --accent-deep:#155a7a;
+  --pending:#a8650a; --pending-soft:#fbefd9; --keying:#6a46b5; --keying-soft:#ece6f8;
+  --done:#2b7a3a; --done-soft:#dff1e2; --bad:#b3261e; --bad-soft:#fbe3e1; --mute-soft:#e7edf1;
+  --g0:#1a6896; --g1:#8f3a10; --g2:#2c6a1c; --g3:#7b2677; --g4:#8a5d00; --g5:#0b6a6a; --g6:#a0233f; --g7:#4146a3;
+  --shadow:0 1px 2px rgba(19,32,42,.06),0 4px 14px rgba(19,32,42,.06);
+  --f-display:"Bai Jamjuree","IBM Plex Sans Thai",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans Thai",system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e1418; --surface:#172026; --surface2:#1c262d; --ink:#e3ebf0; --muted:#98a9b4; --line:#2a3640;
+  --accent:#5fb3dc; --accent-soft:#14303f; --accent-ink:#04141d; --accent-deep:#9fd4ef;
+  --pending:#e7a94a; --pending-soft:#3a2b14; --keying:#b39cf0; --keying-soft:#2a2140;
+  --done:#71c482; --done-soft:#17321d; --bad:#f08a80; --bad-soft:#3d1a18; --mute-soft:#222c33;
+  --g0:#7cc3ea; --g1:#f2a47c; --g2:#97d483; --g3:#e5a0e2; --g4:#e9c45f; --g5:#6dd6d4; --g6:#f48fa9; --g7:#aeb2f7;
+  --shadow:0 1px 2px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1418; --surface:#172026; --surface2:#1c262d; --ink:#e3ebf0; --muted:#98a9b4; --line:#2a3640;
+  --accent:#5fb3dc; --accent-soft:#14303f; --accent-ink:#04141d; --accent-deep:#9fd4ef;
+  --pending:#e7a94a; --pending-soft:#3a2b14; --keying:#b39cf0; --keying-soft:#2a2140;
+  --done:#71c482; --done-soft:#17321d; --bad:#f08a80; --bad-soft:#3d1a18; --mute-soft:#222c33;
+  --g0:#7cc3ea; --g1:#f2a47c; --g2:#97d483; --g3:#e5a0e2; --g4:#e9c45f; --g5:#6dd6d4; --g6:#f48fa9; --g7:#aeb2f7;
+  --shadow:0 1px 2px rgba(0,0,0,.3); color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--surface)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-width:1280px;margin:0 auto}
+
+/* app bar */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
+.bar-top{display:flex;align-items:center;gap:12px;padding-block:10px}
+.brand{font-family:var(--f-display);font-weight:700;font-size:20px;letter-spacing:.01em;display:flex;align-items:center;gap:8px}
+.brand-mark{width:26px;height:26px;border-radius:7px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-size:13px}
+.who{margin-left:auto;display:flex;align-items:center;gap:8px;min-width:0}
+.who-chip{border:1px solid color-mix(in srgb,var(--accent) 40%,var(--line));background:var(--accent-soft);color:var(--accent-deep);font-weight:600;border-radius:999px;padding:4px 12px 4px 4px;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:52vw;display:inline-flex;align-items:center;gap:7px}
+.who-chip .av{flex:none;width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-size:12px;font-weight:700}
+.who-chip.unset{background:var(--pending-soft);color:var(--pending);border-color:color-mix(in srgb,var(--pending) 45%,var(--line))}
+.who-chip.unset .av{background:var(--pending)}
+.nm{font-weight:600}
+.nm-send{color:var(--accent-deep)} .nm-doc{color:var(--g1);font-weight:600}
+.nm-keying{color:var(--keying)} .nm-done{color:var(--done)} .nm-other{color:var(--g3)}
+.tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{border:0;background:none;padding:10px 14px;border-bottom:3px solid transparent;font-weight:500;color:var(--muted);white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+.tab .n{display:inline-block;min-width:20px;padding:0 6px;margin-left:4px;border-radius:999px;background:var(--pending-soft);color:var(--pending);font-size:12px;font-weight:600}
+.banner{background:var(--pending-soft);color:var(--ink);font-size:13px;padding-block:6px}
+.banner b{color:var(--pending)}
+
+main{padding-block:16px 120px}
+h2{font-family:var(--f-display);font-size:19px;margin:0 0 4px;text-wrap:balance;color:var(--accent-deep)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+.label{font-size:12px;font-weight:600;letter-spacing:.04em;color:var(--muted);text-transform:uppercase;margin-bottom:6px;display:block}
+.field{display:flex;flex-direction:column;min-width:0}
+.input,select.input{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:9px 11px;min-height:42px}
+.tm{font-size:18px;letter-spacing:.06em}
+.input[aria-invalid="true"]{border-color:var(--bad);box-shadow:0 0 0 3px var(--bad-soft)}
+.input:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px var(--accent-soft)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.stack{display:flex;flex-direction:column;gap:14px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:9px 14px;min-height:42px;font-weight:500}
+.btn:hover{background:var(--surface2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.danger{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 40%,var(--line))}
+.btn.small{min-height:32px;padding:4px 10px;font-size:13px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chips.scroll{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:14px;white-space:nowrap}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+/* หมวดรายการ: สีเข้มประจำหมวด วนซ้ำทุก 8 หมวด */
+.gc0{--gc:var(--g0)}.gc1{--gc:var(--g1)}.gc2{--gc:var(--g2)}.gc3{--gc:var(--g3)}.gc4{--gc:var(--g4)}.gc5{--gc:var(--g5)}.gc6{--gc:var(--g6)}.gc7{--gc:var(--g7)}
+.chip.gc{color:var(--gc);font-weight:600;border-color:color-mix(in srgb,var(--gc) 40%,var(--line));background:color-mix(in srgb,var(--gc) 9%,var(--surface))}
+.chip.gc[aria-pressed="true"]{background:var(--gc);border-color:var(--gc);color:var(--surface);font-weight:700}
+.chip.gc .c{opacity:1;font-weight:700}
+.grp-h.gc{color:var(--gc);font-weight:700;background:color-mix(in srgb,var(--gc) 8%,var(--surface2))}
+.chip .c{font-size:12px;opacity:.8;margin-left:4px}
+
+/* sender */
+.send-grid{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:16px;align-items:start}
+.timebox{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;background:var(--surface2);border:1px dashed var(--line);border-radius:9px;padding:8px 12px;font-size:14px}
+.timebox b{font-family:var(--f-mono);font-size:16px}
+.now{font-size:12px;border:0;background:none;color:var(--accent);font-weight:600;padding:0 2px;margin-left:6px}
+.picker{display:flex;flex-direction:column;gap:12px;min-width:0}
+.search{position:relative}
+.search input{padding-left:36px}
+.search svg{position:absolute;left:11px;top:12px;width:18px;height:18px;color:var(--muted)}
+.items{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
+.it{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 12px;border-top:1px solid var(--line)}
+.it:first-child{border-top:0}
+.it.on{background:var(--accent-soft)}
+.it-name{font-weight:500;overflow-wrap:anywhere}
+.it-meta{font-size:12.5px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.tag{font-size:11px;font-weight:600;border-radius:5px;padding:1px 6px;background:var(--mute-soft);color:var(--muted)}
+.tag.auto{background:var(--accent-soft);color:var(--accent)}
+.tag.warn{background:var(--bad-soft);color:var(--bad)}
+.step{display:flex;align-items:center;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--surface)}
+.step button{width:38px;height:38px;border:0;background:var(--surface2);font-size:20px;line-height:1}
+.step input{width:46px;height:38px;border:0;text-align:center;font-family:var(--f-mono);font-weight:600;background:transparent;-moz-appearance:textfield}
+.step input::-webkit-inner-spin-button{display:none}
+.grp-h{padding:6px 12px;font-size:12px;font-weight:600;color:var(--muted);background:var(--surface2);border-top:1px solid var(--line);letter-spacing:.03em}
+.grp-h:first-child{border-top:0}
+.empty{padding:28px 16px;text-align:center;color:var(--muted)}
+.actionbar{position:fixed;left:0;right:0;bottom:0;z-index:25;background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -4px 16px rgba(0,0,0,.06);padding-bottom:env(safe-area-inset-bottom,0px)}
+.actionbar .wrap{display:flex;align-items:center;gap:12px;padding-block:10px}
+.ab-sum{min-width:0;flex:1;font-size:14px}
+.ab-sum b{font-size:16px}
+
+/* status */
+.st{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;border-radius:999px;padding:2px 10px;white-space:nowrap}
+.st::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.st-pending{background:var(--pending-soft);color:var(--pending)}
+.st-keying{background:var(--keying-soft);color:var(--keying)}
+.st-done{background:var(--done-soft);color:var(--done)}
+.st-returned{background:var(--bad-soft);color:var(--bad)}
+.st-cancelled{background:var(--mute-soft);color:var(--muted)}
+
+/* case list */
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-bottom:14px}
+.toolbar .field{width:auto}
+.cases{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:10px}
+.case{text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0;border-left:4px solid var(--line)}
+.case:hover{border-color:var(--accent)}
+.case.s-pending{border-left-color:var(--pending)} .case.s-keying{border-left-color:var(--keying)}
+.case.s-done{border-left-color:var(--done)} .case.s-returned{border-left-color:var(--bad)} .case.s-cancelled{opacity:.6}
+.case.sel{outline:2px solid var(--accent);outline-offset:-1px}
+.case-top{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.case-room{font-family:var(--f-display);font-weight:700;font-size:16px}
+.case-sub{font-size:13px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap}
+.reason{font-size:13px;background:var(--bad-soft);color:var(--bad);border-radius:8px;padding:6px 10px}
+
+/* keyer */
+.k-grid{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:16px;align-items:start}
+.k-list{display:flex;flex-direction:column;gap:8px}
+.k-detail{position:sticky;top:120px}
+.sheet-h{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:baseline;margin-bottom:12px}
+.sheet-h .big{font-family:var(--f-display);font-size:24px;font-weight:700}
+.kv{display:flex;flex-direction:column}
+.kv span:first-child{font-size:11.5px;color:var(--muted);font-weight:600;letter-spacing:.04em}
+.kv span:last-child{font-weight:600}
+.his{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:12px}
+.his-h{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:8px 12px;background:var(--surface2);font-weight:600;font-size:14px;border-bottom:1px solid var(--line)}
+.ln{display:grid;grid-template-columns:28px minmax(92px,auto) minmax(0,1fr) 56px 40px;gap:10px;align-items:center;padding:9px 12px;border-top:1px solid var(--line);cursor:pointer}
+.his-h + .ln{border-top:0}
+.ln.ok{background:var(--done-soft)}
+.ln.ok .ln-name,.ln.ok .ln-code{text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--done) 60%,transparent)}
+.ln input{width:20px;height:20px;accent-color:var(--done)}
+.ln-code{font-family:var(--f-mono);font-size:18px;font-weight:600;letter-spacing:.02em;white-space:nowrap}
+.ln-code.none{font-family:var(--f-body);font-size:13px;color:var(--bad)}
+.ln-name{min-width:0;overflow-wrap:anywhere}
+.ln-qty{font-family:var(--f-mono);font-size:20px;font-weight:600;text-align:right}
+.copy{border:1px solid var(--line);background:var(--surface);border-radius:7px;width:36px;height:32px;display:grid;place-items:center}
+.copy svg{width:16px;height:16px}
+.k-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.progress{height:6px;background:var(--mute-soft);border-radius:4px;overflow:hidden;margin-top:6px}
+.progress i{display:block;height:100%;background:var(--done);transition:width .2s}
+.k-close{display:none}
+
+/* summary */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:8px 12px;text-align:left;border-top:1px solid var(--line);white-space:nowrap}
+thead th{border-top:0;font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.03em;background:var(--surface2)}
+td.n,th.n{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+tr.zero td{color:var(--muted)}
+tfoot td{font-weight:700;background:var(--surface2)}
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.tile b{display:block;font-family:var(--f-mono);font-size:26px;line-height:1.2}
+.tile span{font-size:13px;color:var(--muted)}
+.tile.p b{color:var(--pending)} .tile.r b{color:var(--bad)} .tile.d b{color:var(--done)}
+.sec{margin-top:22px}
+
+/* modal + toast */
+.ov{position:fixed;inset:0;z-index:50;background:rgba(8,16,22,.45);display:flex;align-items:flex-end;justify-content:center}
+.ov[hidden]{display:none!important}
+.modal{background:var(--surface);width:100%;max-width:620px;max-height:92vh;overflow:auto;border-radius:16px 16px 0 0;padding:18px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.modal h3{font-family:var(--f-display);margin:0 0 10px;font-size:19px}
+.warns{display:flex;flex-direction:column;gap:6px;margin:10px 0}
+.w{border-radius:8px;padding:8px 12px;font-size:14px}
+.w.err{background:var(--bad-soft);color:var(--bad);font-weight:500}
+.w.warn{background:var(--pending-soft);color:var(--ink)}
+.w.warn b{color:var(--pending)}
+.rv{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.rv div{display:grid;grid-template-columns:96px minmax(0,1fr) 40px;gap:8px;padding:6px 10px;border-top:1px solid var(--line);font-size:14px}
+.rv div:first-child{border-top:0}
+.rv .h{background:var(--surface2);font-weight:600;font-size:12.5px;color:var(--muted);display:block}
+.rv .q{text-align:right;font-family:var(--f-mono);font-weight:600}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:60;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;box-shadow:var(--shadow);max-width:calc(100% - 32px)}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+@media (min-width:700px){.ov{align-items:center}.modal{border-radius:16px}}
+@media (max-width:860px){
+  .send-grid,.k-grid{grid-template-columns:minmax(0,1fr)}
+  .k-detail{position:fixed;inset:0;z-index:40;background:var(--bg);overflow:auto;padding:calc(12px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 120px max(16px,env(safe-area-inset-left,0px));display:none}
+  .k-detail.open{display:block}
+  .k-close{display:inline-flex}
+  .tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:520px){
+  .grid3{grid-template-columns:1fr 1fr}
+  .ln{grid-template-columns:24px minmax(0,1fr) 44px 36px;row-gap:2px}
+  .ln-code{grid-column:2;font-size:17px}
+  .ln-name{grid-column:2;grid-row:2;font-size:13.5px}
+  .ln-qty{grid-column:3;grid-row:1/3}
+  .copy{grid-column:4;grid-row:1/3}
+  .ln input{grid-row:1/3}
+}
+</style>
+</head>
+<body>
+
+
+<header class="bar">
+  <div class="wrap bar-top">
+    <div class="brand"><span class="brand-mark">AB</span>AnesBill</div>
+    <div class="who">
+      <button class="who-chip" id="whoBtn" type="button" title="ตั้งค่า">—</button>
+    </div>
+  </div>
+  <div class="wrap">
+    <nav class="tabs" role="tablist" id="tabs">
+      <button class="tab" role="tab" data-tab="send" id="t-send">ส่งรายการ</button>
+      <button class="tab" role="tab" data-tab="room" id="t-room">เคสของห้อง</button>
+      <button class="tab" role="tab" data-tab="key" id="t-key">ผู้คีย์<span class="n" id="pendN" hidden>0</span></button>
+      <button class="tab" role="tab" data-tab="sum" id="t-sum">สรุป / ส่งออก</button>
+    </nav>
+  </div>
+  <div class="banner" id="demoBanner" hidden><div class="wrap"><b>โหมดทดลอง</b> ข้อมูลเก็บในเครื่องนี้เท่านั้น ใส่ลิงก์ Apps Script ในหน้าตั้งค่าเพื่อใช้งานจริงร่วมกันทุกห้อง</div></div>
+</header>
+
+<main class="wrap">
+  <!-- SEND -->
+  <section id="v-send" hidden>
+    <div class="send-grid">
+      <div class="card stack" id="caseHead">
+        <div class="row" style="justify-content:space-between">
+          <h2 id="formTitle">ส่งรายการค่าบริการ</h2>
+          <button class="btn small" id="clearBtn" type="button">ล้างฟอร์ม</button>
+        </div>
+        <div class="reason" id="editNote" hidden></div>
+        <div class="grid2">
+          <label class="field"><span class="label">วันที่</span><input class="input" type="date" id="fDate"></label>
+          <label class="field"><span class="label">จุดบริการ</span><select class="input" id="fRoom"></select></label>
+        </div>
+        <div class="grid2">
+          <label class="field"><span class="label">HN</span><input class="input mono" id="fHN" inputmode="numeric" autocomplete="off" placeholder="เลข HN"></label>
+          <label class="field"><span class="label">เคสที่</span><input class="input mono" id="fCase" type="number" min="1" inputmode="numeric"></label>
+        </div>
+        <label class="field"><span class="label" style="text-transform:none">Dr.Anes</span><input class="input" id="fDoc" list="docList" autocomplete="off" placeholder="ชื่อวิสัญญีแพทย์"><datalist id="docList"></datalist></label>
+        <div class="field">
+          <span class="label">ชนิดการระงับความรู้สึก</span>
+          <div class="chips" id="fType"></div>
+        </div>
+        <div class="grid2" id="timeRow">
+          <label class="field"><span class="label">เริ่มดมยา <button class="now" type="button" data-now="fStart">ตอนนี้</button></span><input class="input mono tm" type="text" id="fStart" inputmode="numeric" maxlength="5" placeholder="0900" autocomplete="off"></label>
+          <label class="field"><span class="label">สิ้นสุด <button class="now" type="button" data-now="fEnd">ตอนนี้</button></span><input class="input mono tm" type="text" id="fEnd" inputmode="numeric" maxlength="5" placeholder="1130" autocomplete="off"></label>
+        </div>
+        <div class="timebox" id="timeBox"></div>
+        <label class="field"><span class="label">หมายเหตุถึงผู้คีย์ (ถ้ามี)</span><input class="input" id="fNote" placeholder="เช่น ใช้ยานอกรายการ, เคสต่อเนื่อง"></label>
+      </div>
+
+      <div class="picker">
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input class="input" id="q" placeholder="ค้นหาชื่อยา / อุปกรณ์ / รหัส" autocomplete="off">
+        </div>
+        <div class="chips scroll" id="grps"></div>
+        <div class="items" id="itemList"></div>
+      </div>
+    </div>
+    <div class="actionbar"><div class="wrap">
+      <div class="ab-sum" id="abSum"></div>
+      <button class="btn primary" id="reviewBtn" type="button">ตรวจและส่ง</button>
+    </div></div>
+  </section>
+
+  <!-- ROOM LIST -->
+  <section id="v-room" hidden>
+    <div class="toolbar">
+      <label class="field"><span class="label">วันที่</span><input class="input" type="date" id="rDate"></label>
+      <label class="field"><span class="label">จุดบริการ</span><select class="input" id="rRoom"></select></label>
+      <button class="btn" id="rRefresh" type="button">รีเฟรช</button>
+    </div>
+    <div class="cases" id="roomCases"></div>
+  </section>
+
+  <!-- KEYER -->
+  <section id="v-key" hidden>
+    <div class="toolbar">
+      <label class="field"><span class="label">วันที่</span><input class="input" type="date" id="kDate"></label>
+      <div class="field"><span class="label">แสดง</span>
+        <div class="chips" id="kMode">
+          <button class="chip" type="button" data-m="todo" aria-pressed="true">รอคีย์</button>
+          <button class="chip" type="button" data-m="all" aria-pressed="false">ทั้งหมดของวัน</button>
+          <button class="chip" type="button" data-m="backlog" aria-pressed="false">ค้างทุกวัน</button>
+        </div>
+      </div>
+      <button class="btn" id="kRefresh" type="button">รีเฟรช</button>
+      <span class="muted" id="kStamp" style="font-size:13px"></span>
+    </div>
+    <div class="chips scroll" id="kRooms" style="margin-bottom:12px"></div>
+    <div class="k-grid">
+      <div class="k-list" id="kList"></div>
+      <div class="k-detail" id="kDetail"></div>
+    </div>
+  </section>
+
+  <!-- SUMMARY -->
+  <section id="v-sum" hidden>
+    <div class="toolbar">
+      <label class="field"><span class="label">วันที่</span><input class="input" type="date" id="sDate"></label>
+      <button class="btn" id="sRefresh" type="button">รีเฟรช</button>
+    </div>
+    <div class="tiles" id="sTiles"></div>
+    <div class="tbl-wrap"><table id="sTable"></table></div>
+
+    <div class="sec card stack">
+      <div><h2>ส่งออกและล้างข้อมูลรายเดือน</h2>
+      <p class="muted" style="margin:0">ดาวน์โหลดเป็น Excel เก็บไว้ในเครื่อง แล้วล้างเดือนนั้นออกจากระบบเพื่อไม่ให้ข้อมูลสะสม</p></div>
+      <div class="row">
+        <label class="field" style="width:auto"><span class="label">เดือน</span><input class="input" type="month" id="mMonth"></label>
+        <button class="btn primary" id="expBtn" type="button" style="align-self:end">ดาวน์โหลด Excel</button>
+        <button class="btn danger" id="delBtn" type="button" style="align-self:end">ล้างข้อมูลเดือนนี้…</button>
+      </div>
+      <div class="muted" id="expMsg" style="font-size:13px"></div>
+    </div>
+  </section>
+</main>
+
+<div class="ov" id="ov" hidden><div class="modal" id="modal" role="dialog" aria-modal="true"></div></div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+"use strict";
+/* ================= ตั้งค่าที่แก้ได้ ================= */
+const CONFIG = {
+  API_URL: "",          // ใส่ URL ของ Apps Script Web App (ลงท้าย /exec) หรือใส่ในหน้าตั้งค่าของแอป
+  POLL_SECONDS: 30,     // รีเฟรชอัตโนมัติ (วินาที)
+  COPY_NO_SPACE: true,  // ปุ่ม copy รหัส: ตัดช่องว่างออก (70 110 -> 70110)
+};
+/* ชนิดการระงับความรู้สึก + การคิดค่าบริการตามเวลา (อ้างอิงรหัสในรายการ) */
+const ANES = [
+  {k:"GA",   label:"GA ทั่วไป",  first:"70 110", next:"70 111", extra:{"70 201":"hour","70 301":1,"70 310":1,"52 013":1}},
+  {k:"GAC",  label:"GA ซับซ้อน", first:"70 112", next:"70 113", extra:{"70 201":"hour","70 301":1,"70 310":1,"52 013":1}},
+  {k:"TIVA", label:"TIVA",       perHour:"70 120", extra:{"52 013":1}},
+  {k:"RA",   label:"RA",         first:"70 130", next:"70 131", extra:{"52 013":1}},
+  {k:"MAC",  label:"LA with MAC", once:"70 140"},
+  {k:"OTHER",label:"อื่นๆ (ไม่คิดตามเวลา)"},
+];
+/* สีชิปชนิดการระงับความรู้สึก (เลขสีเดียวกับหมวดรายการ 0–7) */
+const TYPE_COLOR = {GA:0, GAC:7, TIVA:5, RA:2, MAC:4, OTHER:3};
+/* ================================================ */
+
+const CAT = {"items": [{"id": "r3", "code": "70 110", "name": "(GA) แบบทั่วไป ชม.แรก", "unit": "ชั่วโมง", "sec": "anes", "grp": "หัตถการวิสัญญี"}, {"id": "r4", "code": "70 111", "name": "(GA) แบบทั่วไป ชม.ถัดไป (คิดทุก 15 นาที)", "unit": "ชั่วโมง", "sec": "anes", "grp": "หัตถการวิสัญญี"}, {"id": "r5", "code": "70 112", "name": "(GA) ซับซ้อน ชม.แรก", "unit": "ชั่วโมง", "sec": "anes", "grp": "หัตถการวิสัญญี"}, {"id": "r6", "code": "70 113", "name": "(GA) ซับซ้อน ชม.ถัดไป (คิดทุก 15 นาที)", "unit": "ชั่วโมง", "sec": "anes", "grp": "หัตถการวิสัญญี"}, {"id": "r7", "code": "70 120", "name": "TIVA ต่อชั่วโมง", "unit": "ชั่วโมง", "sec": "anes", "grp": "หัตถการวิสัญญี"}, {"id": "r8", "code": "70 130", "name": "RA ชั่วโมงแรก", "unit": "ชั่วโมง", "sec": "anes", "grp": "หัตถการวิสัญญี"}, {"id": "r9", "code": "70 131", "name": "RA ชั่วโมงถัดไป (คิดทุก 15 นาที)", "unit": "ชั่วโมง", "sec": "anes", "grp": "หัตถการวิสัญญี"}, {"id": "r10", "code": "70 140", "name": "LA with MAC", "unit": "ครั้ง", "sec": "anes", "grp": "หัตถการวิสัญญี"}, {"id": "r11", "code": "70 201", "name": "ค่า Volatile Anesthetic Agent ต่อ ชม.", "unit": "ชั่วโมง", "sec": "anes", "grp": "หัตถการวิสัญญี"}, {"id": "r12", "code": "70 301", "name": "ค่า CO2 monitoring", "unit": "ครั้ง", "sec": "anes", "grp": "หัตถการวิสัญญี"}, {"id": "r13", "code": "70 330", "name": "ค่าใช้ Fiber optic", "unit": "ครั้ง", "sec": "anes", "grp": "หัตถการวิสัญญี"}, {"id": "r14", "code": "70 340", "name": "ค่าใช้ Infusion pump", "unit": "เครื่อง", "sec": "anes", "grp": "หัตถการวิสัญญี"}, {"id": "r15", "code": "70 310", "name": "ค่าใช้เครื่องวัดความเข้มข้นของยาดมสลบ", "unit": "ครั้ง", "sec": "anes", "grp": "หัตถการวิสัญญี"}, {"id": "r16", "code": "71 011", "name": "การฟื้นคืนชีพ รวมการใช้ Defib", "unit": "ครั้ง", "sec": "anes", "grp": "หัตถการวิสัญญี"}, {"id": "r17", "code": "71 410", "name": "การเปิดหลอดเลือดดำ (Cut down)", "unit": "ครั้ง", "sec": "anes", "grp": "หัตถการวิสัญญี"}, {"id": "r18", "code": "71 411", "name": "การเปิดหลอดเลือดแดง (A-line)", "unit": "ครั้ง", "sec": "anes", "grp": "หัตถการวิสัญญี"}, {"id": "r19", "code": "71 420", "name": "การใส่ 2-3 lumen catheter", "unit": "ครั้ง", "sec": "anes", "grp": "หัตถการวิสัญญี"}, {"id": "r20", "code": "51 422", "name": "Tranesophageal Echocardiogram", "unit": "ครั้ง", "sec": "anes", "grp": "หัตถการวิสัญญี"}, {"id": "r21", "code": "52 013", "name": "ค่าใช้ Warmer", "unit": "ครั้ง", "sec": "anes", "grp": "หัตถการวิสัญญี"}, {"id": "r22", "code": "52 120", "name": "ค่าใช้ PCA (Pain control assistant)", "unit": "วัน", "sec": "anes", "grp": "หัตถการวิสัญญี"}, {"id": "r23", "code": "72 940", "name": "Fluoroscope", "unit": "ครั้ง", "sec": "anes", "grp": "หัตถการวิสัญญี"}, {"id": "r24", "code": "55 510", "name": "การใส่ NG tube", "unit": "ครั้ง", "sec": "anes", "grp": "หัตถการวิสัญญี"}, {"id": "r27", "code": "71 310", "name": "ใส่ ET tube นอกสถานที่", "unit": "", "sec": "med", "grp": "บริการอื่น"}, {"id": "r28", "code": "55 320", "name": "พ่นยาขยายหลอดลม (Pt นอก/ฉุกเฉิน)", "unit": "", "sec": "med", "grp": "บริการอื่น"}, {"id": "r29", "code": "", "name": "MDI conector W/CAP", "unit": "", "sec": "med", "grp": "บริการอื่น"}, {"id": "r30", "code": "55 820", "name": "ให้สารน้ำหลอดเลือดดำ (Pt นอก/ฉุกเฉิน)", "unit": "", "sec": "med", "grp": "บริการอื่น"}, {"id": "r31", "code": "43 001", "name": "ค่า US portable", "unit": "", "sec": "med", "grp": "บริการอื่น"}, {"id": "r33", "code": "1001 701", "name": "Thiopental (250 mg)", "unit": "", "sec": "med", "grp": "Induction"}, {"id": "r34", "code": "1510 756", "name": "Etomidate 20mg/ml", "unit": "", "sec": "med", "grp": "Induction"}, {"id": "r35", "code": "1600 550", "name": "Ketamine (1 ml)", "unit": "", "sec": "med", "grp": "Induction"}, {"id": "r36", "code": "1000 194", "name": "Propofol (20 ml/Amp)", "unit": "", "sec": "med", "grp": "Induction"}, {"id": "r39", "code": "1001 700", "name": "Suxamethonium (50 mg)", "unit": "", "sec": "med", "grp": "Relaxant"}, {"id": "r40", "code": "1001 681", "name": "Cisatracurium (10 mg)", "unit": "", "sec": "med", "grp": "Relaxant"}, {"id": "r41", "code": "1001 025", "name": "Rocuronium (50 mg)", "unit": "", "sec": "med", "grp": "Relaxant"}, {"id": "r44", "code": "1000 417", "name": "Morphine (10 mg)", "unit": "", "sec": "med", "grp": "Narcotic"}, {"id": "r45", "code": "1000 248", "name": "Fentanyl (100 mcg)", "unit": "", "sec": "med", "grp": "Narcotic"}, {"id": "r46", "code": "1000 529", "name": "Pethidine (50 mg)", "unit": "", "sec": "med", "grp": "Narcotic"}, {"id": "r49", "code": "1600 344", "name": "Glycopyrolate (0.2 mg/ml)", "unit": "", "sec": "med", "grp": "Reverse"}, {"id": "r50", "code": "1000 056", "name": "Atropine (0.6 mg)", "unit": "", "sec": "med", "grp": "Reverse"}, {"id": "r51", "code": "1001 697", "name": "Prostigmine (2.5 mg)", "unit": "", "sec": "med", "grp": "Reverse"}, {"id": "r54", "code": "1000 018", "name": "Adrenaline (1 amp)", "unit": "", "sec": "med", "grp": "Inotrope / Supplement"}, {"id": "r55", "code": "1000 111", "name": "Amiodarone (150 mg)", "unit": "", "sec": "med", "grp": "Inotrope / Supplement"}, {"id": "r56", "code": "1000 072", "name": "Buscopan (Hyoscine) 20 mg/ml", "unit": "", "sec": "med", "grp": "Inotrope / Supplement"}, {"id": "r57", "code": "1000 142", "name": "Chloram. eye oint. 1% (5 gm)", "unit": "", "sec": "med", "grp": "Inotrope / Supplement"}, {"id": "r58", "code": "1510 843", "name": "Carbetocin (Duratocin) 100 mcg", "unit": "", "sec": "med", "grp": "Inotrope / Supplement"}, {"id": "r59", "code": "1600 801", "name": "Dexmedetomidine (Precedex)", "unit": "", "sec": "med", "grp": "Inotrope / Supplement"}, {"id": "r60", "code": "1000 165", "name": "Dobutamine (250 mg)", "unit": "", "sec": "med", "grp": "Inotrope / Supplement"}, {"id": "r61", "code": "1000 192", "name": "Dopamine (250 mg)", "unit": "", "sec": "med", "grp": "Inotrope / Supplement"}, {"id": "r62", "code": "1000 216", "name": "Ephedrine (30 mg)", "unit": "", "sec": "med", "grp": "Inotrope / Supplement"}, {"id": "r63", "code": "1001 013", "name": "Levophed (4 mg)", "unit": "", "sec": "med", "grp": "Inotrope / Supplement"}, {"id": "r64", "code": "1000 110", "name": "Nicardipine (10 mg)", "unit": "", "sec": "med", "grp": "Inotrope / Supplement"}, {"id": "r65", "code": "1000 080", "name": "Berodual forte (1 neb)", "unit": "", "sec": "med", "grp": "Inotrope / Supplement"}, {"id": "r66", "code": "1000 736", "name": "Ca.gluconate 10% (10 ml)", "unit": "", "sec": "med", "grp": "Inotrope / Supplement"}, {"id": "r67", "code": "1000 131", "name": "CPM (10 mg)", "unit": "", "sec": "med", "grp": "Inotrope / Supplement"}, {"id": "r68", "code": "1000 205", "name": "Dexamethasone (5 mg)", "unit": "", "sec": "med", "grp": "Inotrope / Supplement"}, {"id": "r69", "code": "1490 015", "name": "Glucose 50% (50 ml)", "unit": "", "sec": "med", "grp": "Inotrope / Supplement"}, {"id": "r70", "code": "1001 684", "name": "Heparin (1 ml)", "unit": "", "sec": "med", "grp": "Inotrope / Supplement"}, {"id": "r71", "code": "1000 591", "name": "Hydrocortisone (100 mg)", "unit": "", "sec": "med", "grp": "Inotrope / Supplement"}, {"id": "r72", "code": "1600 485", "name": "Labetalol inj (Avexa) 100 mg", "unit": "", "sec": "med", "grp": "Inotrope / Supplement"}, {"id": "r73", "code": "1000 242", "name": "Lasix (Furosemide) 20 mg", "unit": "", "sec": "med", "grp": "Inotrope / Supplement"}, {"id": "r74", "code": "1000 243", "name": "Lasix (Furosemide) 250 mg", "unit": "", "sec": "med", "grp": "Inotrope / Supplement"}, {"id": "r75", "code": "1510 994", "name": "Lidocaine preserv.free 2%", "unit": "", "sec": "med", "grp": "Inotrope / Supplement"}, {"id": "r76", "code": "1000 413", "name": "Mag.Sulfate 50% (1 amp)", "unit": "", "sec": "med", "grp": "Inotrope / Supplement"}, {"id": "r77", "code": "1000 422", "name": "Methegin (0.2 mg)", "unit": "", "sec": "med", "grp": "Inotrope / Supplement"}, {"id": "r78", "code": "1001 693", "name": "Midazolam (5 mg)", "unit": "", "sec": "med", "grp": "Inotrope / Supplement"}, {"id": "r79", "code": "1000 438", "name": "Nalador (0.5 mg)", "unit": "", "sec": "med", "grp": "Inotrope / Supplement"}, {"id": "r80", "code": "1000 440", "name": "Naloxone (0.4 mg)", "unit": "", "sec": "med", "grp": "Inotrope / Supplement"}, {"id": "r81", "code": "1001 054", "name": "Ondansetron (8 mg)", "unit": "", "sec": "med", "grp": "Inotrope / Supplement"}, {"id": "r82", "code": "1000 477", "name": "Oxytocin (10 u)", "unit": "", "sec": "med", "grp": "Inotrope / Supplement"}, {"id": "r83", "code": "1600 383", "name": "Paracetamol (1 gm)", "unit": "", "sec": "med", "grp": "Inotrope / Supplement"}, {"id": "r84", "code": "1000 525", "name": "Plasil (10 mg)", "unit": "", "sec": "med", "grp": "Inotrope / Supplement"}, {"id": "r85", "code": "1000 570", "name": "Sodium bicarb.7.5% (50 ml)", "unit": "", "sec": "med", "grp": "Inotrope / Supplement"}, {"id": "r86", "code": "1000 650", "name": "Transmin (250 mg)", "unit": "", "sec": "med", "grp": "Inotrope / Supplement"}, {"id": "r87", "code": "1000 687", "name": "Ventolin neb. (Salbutamol)", "unit": "", "sec": "med", "grp": "Inotrope / Supplement"}, {"id": "r88", "code": "1000 681", "name": "Vitamin K (10 mg)", "unit": "", "sec": "med", "grp": "Inotrope / Supplement"}, {"id": "r91", "code": "1601 103", "name": "Bupivacaine ISO (4 ml)", "unit": "", "sec": "med", "grp": "Regional"}, {"id": "r92", "code": "1000 771", "name": "Bupivacaine spinal (4 ml)", "unit": "", "sec": "med", "grp": "Regional"}, {"id": "r93", "code": "1000 770", "name": "Bupivacaine 0.5% (20 ml)", "unit": "", "sec": "med", "grp": "Regional"}, {"id": "r94", "code": "1001 690", "name": "Lidocaine 1% (1 ml)", "unit": "", "sec": "med", "grp": "Regional"}, {"id": "r95", "code": "1000 981", "name": "Lidocaine 2% (1 ml)", "unit": "", "sec": "med", "grp": "Regional"}, {"id": "r96", "code": "1001 687", "name": "Lidocaine 1%+Epi (1 ml)", "unit": "", "sec": "med", "grp": "Regional"}, {"id": "r97", "code": "1001 688", "name": "Lidocaine 2%+Epi (1 ml)", "unit": "", "sec": "med", "grp": "Regional"}, {"id": "r98", "code": "1510 734", "name": "Lidocaine 2%+Epi (1:2 แสน /vial)", "unit": "", "sec": "med", "grp": "Regional"}, {"id": "r99", "code": "1000 981", "name": "Lidocaine 2% HCL (10 ml)", "unit": "", "sec": "med", "grp": "Regional"}, {"id": "r102", "code": "1000 017", "name": "Acetar 1,000 ml", "unit": "", "sec": "med", "grp": "IV fluid"}, {"id": "r103", "code": "1510 972", "name": "Lactate Ringer Soft b. 1,000 ml", "unit": "", "sec": "med", "grp": "IV fluid"}, {"id": "r104", "code": "1000 341", "name": "NSS 100 ml", "unit": "", "sec": "med", "grp": "IV fluid"}, {"id": "r105", "code": "1520 371", "name": "NSS 250 ml", "unit": "", "sec": "med", "grp": "IV fluid"}, {"id": "r106", "code": "1000 320", "name": "NSS 500 ml", "unit": "", "sec": "med", "grp": "IV fluid"}, {"id": "r107", "code": "1000 319", "name": "NSS 1000 ml", "unit": "", "sec": "med", "grp": "IV fluid"}, {"id": "r108", "code": "1000 863", "name": "NSS Soft bag 1,000 ml", "unit": "", "sec": "med", "grp": "IV fluid"}, {"id": "r109", "code": "1000 340", "name": "D-5-W 100 ml", "unit": "", "sec": "med", "grp": "IV fluid"}, {"id": "r110", "code": "1000 312", "name": "D-5-N/2 500 ml", "unit": "", "sec": "med", "grp": "IV fluid"}, {"id": "r111", "code": "1000 311", "name": "D-5-N/2 1000 ml", "unit": "", "sec": "med", "grp": "IV fluid"}, {"id": "r112", "code": "1000 318", "name": "D-5-N/3 500 ml", "unit": "", "sec": "med", "grp": "IV fluid"}, {"id": "r113", "code": "1000 321", "name": "D-5-N/4 500 ml", "unit": "", "sec": "med", "grp": "IV fluid"}, {"id": "r114", "code": "1000 322", "name": "D-5-N/5 500 ml", "unit": "", "sec": "med", "grp": "IV fluid"}, {"id": "r115", "code": "1001 423", "name": "Voluven 500 ml", "unit": "", "sec": "med", "grp": "IV fluid"}, {"id": "r118", "code": "412 6300", "name": "ET tube 2.5 u/c", "unit": "", "sec": "med", "grp": "ET tube"}, {"id": "r119", "code": "412 6310", "name": "ET tube 3.0 u/c", "unit": "", "sec": "med", "grp": "ET tube"}, {"id": "r120", "code": "430 7410", "name": "ET tube 3.0 cuff", "unit": "", "sec": "med", "grp": "ET tube"}, {"id": "r121", "code": "412 6320", "name": "ET tube 3.5 u/c", "unit": "", "sec": "med", "grp": "ET tube"}, {"id": "r122", "code": "430 7420", "name": "ET tube 3.5 cuff", "unit": "", "sec": "med", "grp": "ET tube"}, {"id": "r123", "code": "412 6330", "name": "ET tube 4.0 u/c", "unit": "", "sec": "med", "grp": "ET tube"}, {"id": "r124", "code": "430 7430", "name": "ET tube 4.0 cuff", "unit": "", "sec": "med", "grp": "ET tube"}, {"id": "r125", "code": "412 6340", "name": "ET tube 4.5 u/c", "unit": "", "sec": "med", "grp": "ET tube"}, {"id": "r126", "code": "430 7440", "name": "ET tube 4.5 cuff", "unit": "", "sec": "med", "grp": "ET tube"}, {"id": "r127", "code": "412 6350", "name": "ET tube 5.0 u/c", "unit": "", "sec": "med", "grp": "ET tube"}, {"id": "r128", "code": "412 7470", "name": "ET tube 5.0 cuff", "unit": "", "sec": "med", "grp": "ET tube"}, {"id": "r129", "code": "412 7380", "name": "ET tube 5.5 u/c", "unit": "", "sec": "med", "grp": "ET tube"}, {"id": "r130", "code": "412 6360", "name": "ET tube 5.5 cuff", "unit": "", "sec": "med", "grp": "ET tube"}, {"id": "r131", "code": "412 7490", "name": "ET tube 6.0 u/c", "unit": "", "sec": "med", "grp": "ET tube"}, {"id": "r132", "code": "412 6370", "name": "ET tube 6.0 cuff", "unit": "", "sec": "med", "grp": "ET tube"}, {"id": "r133", "code": "412 6380", "name": "ET tube 6.5 cuff", "unit": "", "sec": "med", "grp": "ET tube"}, {"id": "r134", "code": "412 6390", "name": "ET tube 7.0 cuff", "unit": "", "sec": "med", "grp": "ET tube"}, {"id": "r135", "code": "412 6400", "name": "ET tube 7.5 cuff", "unit": "", "sec": "med", "grp": "ET tube"}, {"id": "r136", "code": "412 6410", "name": "ET tube 8.0 cuff", "unit": "", "sec": "med", "grp": "ET tube"}, {"id": "r138", "code": "430 7260", "name": "Reinforce ET 4.0 u/c", "unit": "", "sec": "med", "grp": "Reinforce ET"}, {"id": "r139", "code": "430 7270", "name": "Reinforce ET 4.5 u/c", "unit": "", "sec": "med", "grp": "Reinforce ET"}, {"id": "r140", "code": "430 7280", "name": "Reinforce ET 5.0 cuff", "unit": "", "sec": "med", "grp": "Reinforce ET"}, {"id": "r141", "code": "430 7290", "name": "Reinforce ET 5.5 cuff", "unit": "", "sec": "med", "grp": "Reinforce ET"}, {"id": "r142", "code": "430 7070", "name": "Reinforce ET 6.0 cuff", "unit": "", "sec": "med", "grp": "Reinforce ET"}, {"id": "r143", "code": "430 7080", "name": "Reinforce ET 6.5 cuff", "unit": "", "sec": "med", "grp": "Reinforce ET"}, {"id": "r144", "code": "430 7050", "name": "Reinforce ET 7.0 cuff", "unit": "", "sec": "med", "grp": "Reinforce ET"}, {"id": "r145", "code": "430 7060", "name": "Reinforce ET 7.5 cuff", "unit": "", "sec": "med", "grp": "Reinforce ET"}, {"id": "r146", "code": "430 7120", "name": "Reinforce ET 8.0 cuff", "unit": "", "sec": "med", "grp": "Reinforce ET"}, {"id": "r148", "code": "430 7350", "name": "Rae Nasal ET 5.0 u/c", "unit": "", "sec": "med", "grp": "Rae Nasal ET"}, {"id": "r149", "code": "430 1570", "name": "Rae Nasal ET 5.0 cuff", "unit": "", "sec": "med", "grp": "Rae Nasal ET"}, {"id": "r150", "code": "430 7360", "name": "Rae Nasal ET 5.5 u/c", "unit": "", "sec": "med", "grp": "Rae Nasal ET"}, {"id": "r151", "code": "430 1580", "name": "Rae Nasal ET 5.5 cuff", "unit": "", "sec": "med", "grp": "Rae Nasal ET"}, {"id": "r152", "code": "430 7370", "name": "Rae Nasal ET 6.0 u/c", "unit": "", "sec": "med", "grp": "Rae Nasal ET"}, {"id": "r153", "code": "430 1490", "name": "Rae Nasal ET 6.0 cuff", "unit": "", "sec": "med", "grp": "Rae Nasal ET"}, {"id": "r154", "code": "430 7220", "name": "Rae Nasal ET 6.5 cuff", "unit": "", "sec": "med", "grp": "Rae Nasal ET"}, {"id": "r155", "code": "430 7230", "name": "Rae Nasal ET 7.0 cuff", "unit": "", "sec": "med", "grp": "Rae Nasal ET"}, {"id": "r156", "code": "430 7240", "name": "Rae Nasal ET 7.5 cuff", "unit": "", "sec": "med", "grp": "Rae Nasal ET"}, {"id": "r158", "code": "430 7010", "name": "Rae Oral ET 3.0 u/c", "unit": "", "sec": "med", "grp": "Rae Oral ET"}, {"id": "r159", "code": "430 1510", "name": "Rae Oral ET 3.0 cuff", "unit": "", "sec": "med", "grp": "Rae Oral ET"}, {"id": "r160", "code": "430 7020", "name": "Rae Oral ET 3.5 u/c", "unit": "", "sec": "med", "grp": "Rae Oral ET"}, {"id": "r161", "code": "430 1520", "name": "Rae Oral ET 3.5 cuff", "unit": "", "sec": "med", "grp": "Rae Oral ET"}, {"id": "r162", "code": "430 7030", "name": "Rae Oral ET 4.0 u/c", "unit": "", "sec": "med", "grp": "Rae Oral ET"}, {"id": "r163", "code": "430 1530", "name": "Rae Oral ET 4.0 cuff", "unit": "", "sec": "med", "grp": "Rae Oral ET"}, {"id": "r164", "code": "430 7130", "name": "Rae Oral ET 4.5 u/c", "unit": "", "sec": "med", "grp": "Rae Oral ET"}, {"id": "r165", "code": "430 1560", "name": "Rae Oral ET 4.5 cuff", "unit": "", "sec": "med", "grp": "Rae Oral ET"}, {"id": "r166", "code": "430 7040", "name": "Rae Oral ET 5.0 u/c", "unit": "", "sec": "med", "grp": "Rae Oral ET"}, {"id": "r167", "code": "", "name": "Rae Oral ET 5.0 cuff", "unit": "", "sec": "med", "grp": "Rae Oral ET"}, {"id": "r168", "code": "430 1430", "name": "Rae Oral ET 5.5 u/c", "unit": "", "sec": "med", "grp": "Rae Oral ET"}, {"id": "r169", "code": "430 7170", "name": "Rae Oral ET 5.5 cuff", "unit": "", "sec": "med", "grp": "Rae Oral ET"}, {"id": "r170", "code": "430 1440", "name": "Rae Oral ET 6.0 u/c", "unit": "", "sec": "med", "grp": "Rae Oral ET"}, {"id": "r171", "code": "430 7150", "name": "Rae Oral ET 6.0 cuff", "unit": "", "sec": "med", "grp": "Rae Oral ET"}, {"id": "r172", "code": "430 7160", "name": "Rae Oral ET 6.5 cuff", "unit": "", "sec": "med", "grp": "Rae Oral ET"}, {"id": "r173", "code": "430 7140", "name": "Rae Oral ET 7.0 cuff", "unit": "", "sec": "med", "grp": "Rae Oral ET"}, {"id": "r174", "code": "430 7180", "name": "Rae Oral ET 7.5 cuff", "unit": "", "sec": "med", "grp": "Rae Oral ET"}, {"id": "r175", "code": "430 7190", "name": "Rae Oral ET 8.0 cuff", "unit": "", "sec": "med", "grp": "Rae Oral ET"}, {"id": "r177", "code": "430 7200", "name": "MLT 4.0 cuff", "unit": "", "sec": "med", "grp": "MLT"}, {"id": "r178", "code": "430 7210", "name": "MLT 5.0 cuff", "unit": "", "sec": "med", "grp": "MLT"}, {"id": "r179", "code": "430 7090", "name": "MLT 6.0 cuff", "unit": "", "sec": "med", "grp": "MLT"}, {"id": "r181", "code": "430 9070", "name": "Broncho catheter Left 32", "unit": "", "sec": "med", "grp": "Broncho catheter"}, {"id": "r182", "code": "430 8090", "name": "Broncho catheter Left 35", "unit": "", "sec": "med", "grp": "Broncho catheter"}, {"id": "r183", "code": "430 8100", "name": "Broncho catheter Left 37", "unit": "", "sec": "med", "grp": "Broncho catheter"}, {"id": "r184", "code": "430 8150", "name": "Broncho catheter Left 39", "unit": "", "sec": "med", "grp": "Broncho catheter"}, {"id": "r185", "code": "430 8090", "name": "Broncho catheter Right 35", "unit": "", "sec": "med", "grp": "Broncho catheter"}, {"id": "r186", "code": "430 8060", "name": "Broncho catheter Right 37", "unit": "", "sec": "med", "grp": "Broncho catheter"}, {"id": "r188", "code": "412 6740", "name": "NG tube 10 (ดำ)", "unit": "", "sec": "med", "grp": "NG tube"}, {"id": "r189", "code": "412 6750", "name": "NG tube 12 (ขาว)", "unit": "", "sec": "med", "grp": "NG tube"}, {"id": "r190", "code": "412 6760", "name": "NG tube 14 (เขียว)", "unit": "", "sec": "med", "grp": "NG tube"}, {"id": "r191", "code": "412 6770", "name": "NG tube 16 (ส้ม)", "unit": "", "sec": "med", "grp": "NG tube"}, {"id": "r192", "code": "412 6780", "name": "NG tube 18 (แดง)", "unit": "", "sec": "med", "grp": "NG tube"}, {"id": "r193", "code": "412 8100", "name": "O2 mask ผู้ใหญ่", "unit": "", "sec": "med", "grp": "O2 / Airway"}, {"id": "r194", "code": "412 8120", "name": "O2 mask c bag ผู้ใหญ่", "unit": "", "sec": "med", "grp": "O2 / Airway"}, {"id": "r195", "code": "412 8130", "name": "O2 mask c bag เด็ก", "unit": "", "sec": "med", "grp": "O2 / Airway"}, {"id": "r196", "code": "412 6420", "name": "O2 cannular ผู้ใหญ่", "unit": "", "sec": "med", "grp": "O2 / Airway"}, {"id": "r197", "code": "412 6430", "name": "O2 cannular เด็ก", "unit": "", "sec": "med", "grp": "O2 / Airway"}, {"id": "r198", "code": "412 8160", "name": "O2 nebulizer mask ผู้ใหญ่ พ่นยา", "unit": "", "sec": "med", "grp": "O2 / Airway"}, {"id": "r199", "code": "412 8170", "name": "O2 nebulizer mask เด็ก พ่นยา", "unit": "", "sec": "med", "grp": "O2 / Airway"}, {"id": "r200", "code": "410 4140", "name": "Catheter mount (Flexible joint)", "unit": "", "sec": "med", "grp": "O2 / Airway"}, {"id": "r201", "code": "401 8140", "name": "T-piece", "unit": "", "sec": "med", "grp": "O2 / Airway"}, {"id": "r203", "code": "412 7660", "name": "Tycare Exel Catheter 6 ch Suction", "unit": "", "sec": "med", "grp": "Suction"}, {"id": "r204", "code": "412 7670", "name": "Tycare Exel Catheter 8 ch Suction", "unit": "", "sec": "med", "grp": "Suction"}, {"id": "r205", "code": "412 7670", "name": "Tycare Exel Catheter 10 ch Suction", "unit": "", "sec": "med", "grp": "Suction"}, {"id": "r206", "code": "412 7680", "name": "Tycare Exel Catheter 12 ch Suction", "unit": "", "sec": "med", "grp": "Suction"}, {"id": "r207", "code": "412 7690", "name": "Tycare Exel Catheter 14 ch Suction", "unit": "", "sec": "med", "grp": "Suction"}, {"id": "r209", "code": "401 2040", "name": "Pressure monitoring kit (A-line)", "unit": "", "sec": "med", "grp": "Monitoring / อื่นๆ"}, {"id": "r210", "code": "401 2060", "name": "Pressure monitoring kit (2 หัว)", "unit": "", "sec": "med", "grp": "Monitoring / อื่นๆ"}, {"id": "r211", "code": "401 2070", "name": "Pressure tubing 48", "unit": "", "sec": "med", "grp": "Monitoring / อื่นๆ"}, {"id": "r212", "code": "401 2380", "name": "Epidural 18G minipake system 2", "unit": "", "sec": "med", "grp": "Monitoring / อื่นๆ"}, {"id": "r213", "code": "402 4190", "name": "แผ่นปิดหน้าอกไฟฟ้าเพื่อกระตุ้นหัวใจ", "unit": "", "sec": "med", "grp": "Monitoring / อื่นๆ"}, {"id": "r215", "code": "", "name": "Sheath 6 fr.", "unit": "", "sec": "med", "grp": "อุปกรณ์ไม่มีรหัส"}, {"id": "r216", "code": "", "name": "V flow (A-line c guild)", "unit": "", "sec": "med", "grp": "อุปกรณ์ไม่มีรหัส"}], "rooms": ["CVT 1", "CVT 2", "602", "603", "604", "605", "607", "608", "609", "Remote", "Endo 1", "Endo 2", "501", "502", "503", "504", "505", "506", "507", "สูติ 1", "สูติ 2", "สูติ 3"]};
+let ITEMS = CAT.items, ROOMS = CAT.rooms;
+let BYID = {}, BYCODE = {};
+let DUPCODES = new Set();
+function indexItems(){ BYID={}; BYCODE={}; const seen=new Set(); DUPCODES=new Set();
+  ITEMS.forEach(i=>{BYID[i.id]=i; if(!i.code) return; if(seen.has(i.code)) DUPCODES.add(i.code); seen.add(i.code); if(!BYCODE[i.code]) BYCODE[i.code]=i;}); }
+indexItems();
+const AIRWAY_GRPS = ["ET tube","Reinforce ET","Rae Nasal ET","Rae Oral ET","MLT","Broncho catheter"];
+
+/* ---------- storage (best effort) ---------- */
+const MEM = {};
+function lsGet(k,d){ try{ const v=localStorage.getItem(k); return v==null?(k in MEM?MEM[k]:d):JSON.parse(v);}catch(e){ return k in MEM?MEM[k]:d; } }
+function lsSet(k,v){ MEM[k]=v; try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+
+let settings = Object.assign({name:"",room:"",api:CONFIG.API_URL,pin:"",tab:"send",copyNoSpace:CONFIG.COPY_NO_SPACE}, lsGet("ab_settings",{}));
+if (CONFIG.API_URL && !settings.api) settings.api = CONFIG.API_URL;
+const isLive = () => !!settings.api;
+
+/* ---------- utils ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pad = n => String(n).padStart(2,"0");
+function today(){ const d=new Date(); return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
+function nowHM(){ const d=new Date(); return pad(d.getHours())+":"+pad(d.getMinutes()); }
+function nowISO(){ return new Date().toISOString(); }
+function hm(iso){ if(!iso) return ""; const d=new Date(iso); return isNaN(d)?"":pad(d.getHours())+":"+pad(d.getMinutes()); }
+function thDate(s){ if(!s) return ""; const [y,m,d]=s.split("-").map(Number); const M=["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."]; return d+" "+M[m-1]+" "+String(y+543).slice(2); }
+function uid(){ try{ return crypto.randomUUID(); }catch(e){ return "id"+Date.now().toString(36)+Math.random().toString(36).slice(2,8); } }
+function minutesBetween(a,b){ if(!a||!b) return null; const [h1,m1]=a.split(":").map(Number),[h2,m2]=b.split(":").map(Number); let d=(h2*60+m2)-(h1*60+m1); if(d<0) d+=1440; return d; }
+function durTxt(m){ if(m==null) return "—"; const h=Math.floor(m/60), r=m%60; return (h?h+" ชม. ":"")+r+" นาที"; }
+const STATUS = {pending:"รอคีย์",keying:"กำลังคีย์",done:"คีย์แล้ว",returned:"ส่งกลับแก้ไข",cancelled:"ยกเลิก"};
+const stPill = s => `<span class="st st-${s}">${STATUS[s]||s}</span>`;
+let toastT; function toast(msg){ const t=$("#toast"); t.textContent=msg; t.hidden=false; clearTimeout(toastT); toastT=setTimeout(()=>t.hidden=true,2600); }
+const anesLabel = k => (ANES.find(a=>a.k===k)||{}).label || "";
+
+/* ---------- API (Apps Script หรือโหมดทดลองในเครื่อง) ---------- */
+async function api(action, data){
+  data = data || {};
+  if (!isLive()) return localApi(action, data);
+  const res = await fetch(settings.api, {method:"POST", body: JSON.stringify(Object.assign({action, pin:settings.pin}, data))});
+  if (!res.ok) throw new Error("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ("+res.status+")");
+  const j = await res.json();
+  if (!j.ok) throw new Error(j.error || "เกิดข้อผิดพลาด");
+  return j.data;
+}
+const EDITABLE = ["pending","returned"];
+function localApi(action, d){
+  let all = lsGet("ab_cases", null);
+  if (all === null){ all = demoSeed(); lsSet("ab_cases", all); }
+  const save = () => lsSet("ab_cases", all);
+  const find = id => all.find(c=>c.id===id);
+  switch(action){
+    case "list":
+      if (d.backlog) return all.filter(c=>c.status==="pending"||c.status==="keying"||c.status==="returned");
+      if (d.month) return all.filter(c=>c.date.startsWith(d.month));
+      return all.filter(c=>c.date===d.date);
+    case "save": {
+      const c = d.case;
+      if (!c.id){ c.id=uid(); c.status="pending"; c.sentAt=nowISO(); c.updatedAt=c.sentAt; all.push(c); save(); return c; }
+      const cur = find(c.id); if(!cur) throw new Error("ไม่พบเคสนี้");
+      if (!EDITABLE.includes(cur.status)) throw new Error("เคสนี้ผู้คีย์รับไปแล้ว แก้ไขไม่ได้ ใช้ 'ส่งรายการเพิ่ม' แทน");
+      Object.assign(cur, c, {status:"pending", returnReason:"", updatedAt:nowISO()}); save(); return cur;
+    }
+    case "status": {
+      const cur = find(d.id); if(!cur) throw new Error("ไม่พบเคสนี้");
+      checkTransition(cur, d); applyTransition(cur, d); save(); return cur;
+    }
+    case "deleteMonth": { const n=all.length; all = all.filter(c=>!c.date.startsWith(d.month)); save(); return {deleted:n-all.length}; }
+    case "config": return null;
+  }
+  throw new Error("unknown action");
+}
+/* กติกาเปลี่ยนสถานะ (ฝั่งเซิร์ฟเวอร์ใช้กติกาเดียวกัน) */
+function checkTransition(cur, d){
+  const from = cur.status, to = d.status;
+  const ok = {
+    keying:   ["pending"],
+    done:     ["pending","keying"],
+    returned: ["pending","keying"],
+    cancelled:["pending","returned"],
+    pending:  ["keying"]           // ผู้คีย์ปล่อยคืนคิว
+  }[to] || [];
+  if (from===to && to==="keying" && cur.keyer===d.by) return;
+  if (!ok.includes(from)) throw new Error("สถานะเคสเปลี่ยนไปแล้ว ("+(STATUS[from]||from)+") กรุณารีเฟรช");
+}
+function applyTransition(cur, d){
+  const t = nowISO(); cur.status=d.status; cur.updatedAt=t;
+  if (d.status==="keying"){ cur.keyer=d.by; cur.keyStart=t; }
+  if (d.status==="done"){ cur.keyer=d.by; cur.keyedAt=t; }
+  if (d.status==="returned"){ cur.returnReason=d.reason||""; cur.returnedBy=d.by; }
+  if (d.status==="pending"){ cur.keyer=""; cur.keyStart=""; }
+  if (d.status==="cancelled"){ cur.cancelledBy=d.by; }
+}
+function demoSeed(){
+  const D=today(), mk=(room,no,hn,type,s,e,codes,extra)=>{
+    const m=minutesBetween(s,e);
+    const items=[...autoItems(type,m).map(a=>({...a,auto:true})), ...codes.map(([c,q])=>{const it=BYCODE[c]; return {id:it.id,code:it.code,name:it.name,sec:it.sec,qty:q};})];
+    return Object.assign({id:uid(),date:D,room,caseNo:no,hn,anesType:type,start:s,end:e,minutes:m,items,note:"ข้อมูลตัวอย่าง",sender:"ตัวอย่าง",status:"pending",sentAt:nowISO(),updatedAt:nowISO()},extra||{});
+  };
+  return [
+    mk("CVT 1",1,"000000101","GAC","08:40","13:25",[["1000 194",2],["1000 248",2],["1001 025",2],["430 7050",1],["71 411",1],["401 2040",1],["70 340",3],["1000 017",2]]),
+    mk("602",1,"000000102","GA","08:15","10:05",[["1000 194",1],["1000 248",1],["1001 025",1],["412 6390",1],["1000 341",1]],{status:"done",keyer:"ตัวอย่าง",keyedAt:nowISO()}),
+    mk("602",2,"000000103","GA","10:30","11:20",[["1000 194",1],["1000 248",1],["1001 054",1]]),
+    mk("สูติ 1",1,"000000104","RA","09:00","09:55",[["1000 771",1],["1000 477",2],["1000 017",1]]),
+    mk("Endo 1",1,"000000105","TIVA","08:30","09:10",[["1000 194",1],["1001 693",1],["412 6420",1]],{status:"returned",returnReason:"Propofol จำนวนเท่าไร? ใบเดิมเขียน 1 แต่มีหมายเหตุ 2 amp"}),
+  ];
+}
+
+/* ---------- auto charge by time ---------- */
+function autoItems(type, minutes){
+  const a = ANES.find(x=>x.k===type); if(!a) return [];
+  const out=[], add=(code,qty)=>{ const it=BYCODE[code]; if(it && qty>0) out.push({id:it.id,code:it.code,name:it.name,sec:it.sec,qty}); };
+  const timed = minutes!=null && minutes>0;
+  if (a.extra) Object.entries(a.extra).forEach(([c,v])=>{ if(v!=="hour") add(c,v); });   // รายการคงที่ (CO2, Warmer) ใส่ทันทีที่เลือกชนิด
+  if (!timed) return out;
+  if (a.first){ add(a.first,1); const ex=minutes-60; if(ex>0) add(a.next, Math.ceil(ex/15)); }
+  if (a.perHour) add(a.perHour, Math.max(1,Math.ceil(minutes/60)));
+  if (a.once) add(a.once,1);
+  if (a.extra) Object.entries(a.extra).forEach(([c,v])=>{ if(v==="hour") add(c, Math.max(1,Math.ceil(minutes/60))); });
+  return out;
+}
+function timeExplain(type, minutes){
+  const a = ANES.find(x=>x.k===type);
+  if (!a) return "เลือกชนิดการระงับความรู้สึก แล้วกรอกเวลา";
+  if (a.k==="OTHER") return "ไม่คิดค่าบริการตามเวลา";
+  if (minutes==null) return "กรอกเวลาเริ่ม–สิ้นสุด แล้วระบบคิดค่าบริการตามเวลาให้";
+  if (a.first){ const ex=minutes-60; return ex>0 ? `ชม.แรก 1 + ถัดไป <b>${Math.ceil(ex/15)}</b> × 15 นาที` : "ชม.แรก 1"; }
+  if (a.perHour) return `TIVA <b>${Math.max(1,Math.ceil(minutes/60))}</b> ชม.`;
+  return "คิด 1 ครั้ง";
+}
+
+/* ---------- state ---------- */
+const S = {
+  tab: settings.tab||"send",
+  draft: null, grp: null, q: "",
+  roomCases: [], keyCases: [], keyMode:"todo", keyRoom:"", keySel:null,
+  checks: lsGet("ab_checks",{}), usage: lsGet("ab_usage",{}),
+};
+function newDraft(){
+  return {id:"", date:today(), room:settings.room||ROOMS[0], caseNo:"", hn:"", anesType:"", start:"", end:"", note:"", doctor:"", qty:{}, autoIds:[], manual:{}, parentId:""};
+}
+S.draft = Object.assign(newDraft(), lsGet("ab_draft", {}));
+
+/* ---------- tabs ---------- */
+function setTab(t){
+  S.tab=t; settings.tab=t; lsSet("ab_settings",settings);
+  document.querySelectorAll(".tab").forEach(b=>b.setAttribute("aria-selected", b.dataset.tab===t));
+  ["send","room","key","sum"].forEach(v=>$("#v-"+v).hidden = v!==t);
+  if (t==="room") loadRoom(); if (t==="key") loadKey(); if (t==="sum") loadSum();
+  if (t==="send") renderSend();
+}
+$("#tabs").addEventListener("click",e=>{ const b=e.target.closest(".tab"); if(b) setTab(b.dataset.tab); });
+
+/* ---------- SEND ---------- */
+function fillRoomSelect(sel, val){ sel.innerHTML = ROOMS.map(r=>`<option ${r===val?"selected":""}>${esc(r)}</option>`).join(""); }
+function saveDraft(){ lsSet("ab_draft", S.draft); }
+function recomputeAuto(){
+  const d=S.draft, m=minutesBetween(d.start,d.end);
+  const auto=autoItems(d.anesType,m);
+  d.autoIds.forEach(id=>{ if(!d.manual[id]) delete d.qty[id]; });
+  d.autoIds = auto.map(a=>a.id);
+  auto.forEach(a=>{ if(!d.manual[a.id]) d.qty[a.id]=a.qty; });
+}
+function renderHead(){
+  const d=S.draft;
+  $("#fDate").value=d.date; fillRoomSelect($("#fRoom"), d.room);
+  $("#fHN").value=d.hn; $("#fDoc").value=d.doctor||""; $("#docList").innerHTML=(lsGet("ab_docs",[])).map(n=>`<option value="${esc(n)}">`).join(""); $("#fCase").value=d.caseNo; $("#fStart").value=d.start; $("#fEnd").value=d.end; $("#fNote").value=d.note;
+  $("#fType").innerHTML = ANES.map(a=>`<button type="button" class="chip gc gc${TYPE_COLOR[a.k]??1}" data-k="${a.k}" aria-pressed="${d.anesType===a.k}">${esc(a.label)}</button>`).join("");
+  $("#formTitle").textContent = d.id ? "แก้ไขเคส" : (d.parentId ? "ส่งรายการเพิ่ม" : "ส่งรายการค่าบริการ");
+  const en=$("#editNote");
+  if (d.returnReason){ en.hidden=false; en.textContent="ผู้คีย์ส่งกลับ: "+d.returnReason; }
+  else if (d.parentId){ en.hidden=false; en.textContent="รายการเพิ่มเติมของเคสเดิม (HN "+d.hn+") ใส่เฉพาะรายการที่ยังไม่ได้ส่ง"; }
+  else en.hidden=true;
+  renderTime();
+}
+function renderTime(){
+  const d=S.draft, m=minutesBetween(d.start,d.end);
+  const timed = d.anesType && d.anesType!=="OTHER";
+  $("#timeBox").innerHTML = `<span>${timeExplain(d.anesType,m)}</span><b>${durTxt(m)}</b>`;
+  $("#timeRow").style.opacity = timed||!d.anesType ? 1 : .6;
+}
+function allGroups(){ const g=[]; ITEMS.forEach(i=>{ if(!g.includes(i.grp)) g.push(i.grp); }); return ["เลือกแล้ว","ใช้บ่อย",...g]; }
+function gcls(g){ const i=allGroups().indexOf(g); return i<0?"":"gc gc"+(i%8); }   // สีคงที่ต่อหมวด แม้ "ใช้บ่อย" ยังไม่แสดง
+function groups(){ const all=allGroups(); return Object.keys(S.usage).length ? all : all.filter(g=>g!=="ใช้บ่อย"); }
+function renderGroups(){
+  const gs=groups(); if(!S.grp || !gs.includes(S.grp)) S.grp = gs[1];
+  const n = Object.keys(S.draft.qty).length;
+  $("#grps").innerHTML = gs.map(g=>`<button type="button" class="chip ${gcls(g)}" data-g="${esc(g)}" aria-pressed="${!S.q && S.grp===g}">${esc(g)}${g==="เลือกแล้ว"?`<span class="c">${n}</span>`:""}</button>`).join("");
+}
+function itemRow(i){
+  const d=S.draft, q=d.qty[i.id]||0, auto=d.autoIds.includes(i.id)&&!d.manual[i.id];
+  return `<div class="it ${q?"on":""}" data-id="${i.id}">
+    <div style="min-width:0"><div class="it-name">${esc(i.name)}</div>
+    <div class="it-meta"><span class="mono">${i.code?esc(i.code):""}</span>${!i.code?'<span class="tag warn">ไม่มีรหัส</span>':""}${i.unit?`<span>${esc(i.unit)}</span>`:""}${auto?'<span class="tag auto">อัตโนมัติ</span>':""}</div></div>
+    <div class="step"><button type="button" data-d="-1" aria-label="ลด">−</button><input type="number" min="0" inputmode="numeric" value="${q||""}" placeholder="0" aria-label="จำนวน ${esc(i.name)}"><button type="button" data-d="1" aria-label="เพิ่ม">+</button></div>
+  </div>`;
+}
+function renderItems(){
+  renderGroups();
+  let list, q=S.q.trim().toLowerCase();
+  if (q){ const qs=q.replace(/\s/g,""); list = ITEMS.filter(i=>i.name.toLowerCase().includes(q) || i.code.replace(/\s/g,"").includes(qs)); }
+  else if (S.grp==="เลือกแล้ว") list = ITEMS.filter(i=>S.draft.qty[i.id]);
+  else if (S.grp==="ใช้บ่อย") list = Object.entries(S.usage).sort((a,b)=>b[1]-a[1]).slice(0,24).map(([id])=>BYID[id]).filter(Boolean);
+  else list = ITEMS.filter(i=>i.grp===S.grp);
+  let html="", last="";
+  list.forEach(i=>{ if((q||S.grp==="เลือกแล้ว") && i.grp!==last){ html+=`<div class="grp-h ${gcls(i.grp)}">${esc(i.grp)}</div>`; last=i.grp; } html+=itemRow(i); });
+  $("#itemList").innerHTML = html || `<div class="empty">${S.grp==="เลือกแล้ว"?"ยังไม่ได้เลือกรายการ เลือกจากหมวดด้านบน หรือพิมพ์ค้นหา":"ไม่พบรายการ"}</div>`;
+  renderActionBar();
+}
+function renderActionBar(){
+  const d=S.draft, ids=Object.keys(d.qty), n=ids.length;
+  $("#abSum").innerHTML = `<b>${n}</b> รายการ · ${esc(d.room)}${d.hn?` · HN <span class="mono">${esc(d.hn)}</span>`:""}`;
+  $("#reviewBtn").textContent = d.id ? "ตรวจและบันทึกการแก้ไข" : "ตรวจและส่ง";
+}
+function renderSend(){ renderHead(); renderItems(); suggestCaseNo(); }
+async function suggestCaseNo(){
+  const d=S.draft; if (d.id || d.caseNo) return;
+  try{
+    const cs = await api("list",{date:d.date});
+    const mx = cs.filter(c=>c.room===d.room && c.status!=="cancelled").reduce((m,c)=>Math.max(m,+c.caseNo||0),0);
+    if (!S.draft.caseNo){ S.draft.caseNo = mx+1; $("#fCase").value = mx+1; saveDraft(); }
+    S.dayCases = cs;
+  }catch(e){}
+}
+function setQty(id, q){
+  const d=S.draft; q=Math.max(0, Math.min(999, Math.round(+q||0)));
+  if (d.autoIds.includes(id)) d.manual[id]=true;
+  if (q) d.qty[id]=q; else delete d.qty[id];
+  saveDraft();
+}
+$("#itemList").addEventListener("click",e=>{
+  const b=e.target.closest("button[data-d]"); if(!b) return;
+  const row=b.closest(".it"), id=row.dataset.id;
+  setQty(id, (S.draft.qty[id]||0) + (+b.dataset.d));
+  row.outerHTML = itemRow(BYID[id]); renderGroups(); renderActionBar();
+});
+$("#itemList").addEventListener("change",e=>{
+  if (e.target.tagName!=="INPUT") return; const row=e.target.closest(".it"), id=row.dataset.id;
+  setQty(id, e.target.value); row.outerHTML=itemRow(BYID[id]); renderGroups(); renderActionBar();
+});
+$("#grps").addEventListener("click",e=>{ const b=e.target.closest(".chip"); if(!b) return; S.grp=b.dataset.g; S.q=""; $("#q").value=""; renderItems(); });
+$("#q").addEventListener("input",e=>{ S.q=e.target.value; renderItems(); });
+$("#fType").addEventListener("click",e=>{ const b=e.target.closest(".chip"); if(!b) return; S.draft.anesType = S.draft.anesType===b.dataset.k ? "" : b.dataset.k; recomputeAuto(); saveDraft(); renderHead(); renderItems(); });
+[["#fDate","date"],["#fRoom","room"],["#fHN","hn"],["#fCase","caseNo"],["#fDoc","doctor"],["#fNote","note"]].forEach(([sel,k])=>{
+  $(sel).addEventListener(sel==="#fHN"||sel==="#fNote"||sel==="#fDoc"?"input":"change", e=>{
+    S.draft[k]=e.target.value.trim? e.target.value.trim() : e.target.value;
+    if (k==="start"||k==="end"){ recomputeAuto(); renderTime(); renderItems(); }
+    if ((k==="room"||k==="date") && !S.draft.id){ S.draft.caseNo=""; suggestCaseNo(); }
+    saveDraft(); renderActionBar();
+  });
+});
+/* เวลา: พิมพ์ 0900, 900, 9, 9:00 หรือ 9.00 ได้ แอปจัดรูปแบบเป็น 09:00 ให้ */
+function normTime(v){
+  v=String(v||"").trim(); if(!v) return "";
+  let h,m; const sp=v.split(/[:.\s]/);
+  if (sp.length===2){ h=sp[0]; m=sp[1]||"0"; }
+  else { const d=v.replace(/\D/g,""); if(!d||d.length>4) return null;
+    if(d.length<=2){ h=d; m="0"; } else { h=d.slice(0,d.length-2); m=d.slice(-2); } }
+  if(!/^\d{1,2}$/.test(h)||!/^\d{1,2}$/.test(m)) return null;
+  h=+h; m=+m; if(h>23||m>59) return null;
+  return pad(h)+":"+pad(m);
+}
+function commitTime(el, k){
+  const t=normTime(el.value);
+  if (t===null){ el.setAttribute("aria-invalid","true"); toast("เวลาไม่ถูกต้อง พิมพ์ 4 หลัก เช่น 0900 หรือ 1345"); return false; }
+  el.removeAttribute("aria-invalid"); el.value=t;
+  if (S.draft[k]!==t){ S.draft[k]=t; recomputeAuto(); saveDraft(); renderTime(); renderItems(); }
+  return true;
+}
+[["#fStart","start","#fEnd"],["#fEnd","end",null]].forEach(([sel,k,next])=>{
+  const el=$(sel);
+  el.addEventListener("focus",()=>{ el.select(); });
+  el.addEventListener("input",()=>{ el.removeAttribute("aria-invalid");
+    if (/^\d{4}$/.test(el.value) && commitTime(el,k)){ if(next) $(next).focus(); else el.blur(); } });
+  el.addEventListener("change",()=>commitTime(el,k));
+  el.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); if(commitTime(el,k)){ if(next) $(next).focus(); else el.blur(); } } });
+});
+document.querySelectorAll("[data-now]").forEach(b=>b.addEventListener("click",e=>{ e.preventDefault(); const k=b.dataset.now, el=$("#"+k); el.value=nowHM(); commitTime(el, k==="fStart"?"start":"end"); }));
+$("#clearBtn").addEventListener("click",()=>{
+  openModal(`<h3>ล้างฟอร์ม?</h3><p class="muted">รายการที่เลือกไว้ในฟอร์มนี้จะหายไป (เคสที่ส่งแล้วไม่ได้รับผลกระทบ)</p>
+  <div class="row" style="justify-content:flex-end"><button class="btn" data-close>ยกเลิก</button><button class="btn danger" id="doClear">ล้างฟอร์ม</button></div>`);
+  $("#doClear").onclick=()=>{ resetDraft(); closeModal(); };
+});
+function resetDraft(){ const room=S.draft.room, date=S.draft.date; S.draft=newDraft(); S.draft.room=room; S.draft.date=date; saveDraft(); S.grp=null; renderSend(); }
+
+function draftItems(){
+  return Object.entries(S.draft.qty).map(([id,qty])=>{ const i=BYID[id]; return i&&{id,code:i.code,name:i.name,sec:i.sec,qty,auto:S.draft.autoIds.includes(id)&&!S.draft.manual[id]}; })
+    .filter(Boolean).sort((a,b)=>ITEMS.indexOf(BYID[a.id])-ITEMS.indexOf(BYID[b.id]));
+}
+function validate(){
+  const d=S.draft, its=draftItems(), errs=[], warns=[], codes=new Set(its.map(i=>i.code));
+  const m=minutesBetween(d.start,d.end), timed=d.anesType && d.anesType!=="OTHER";
+  if (!d.room) errs.push("ยังไม่ได้เลือกจุดบริการ");
+  if (!d.hn) errs.push("ยังไม่ได้กรอก HN");
+  if (!d.caseNo) errs.push("ยังไม่ได้ระบุลำดับเคส");
+  if (!its.length) errs.push("ยังไม่ได้เลือกรายการ");
+  if (!d.parentId){
+    if (!d.anesType) warns.push("<b>ยังไม่ได้เลือกชนิดการระงับความรู้สึก</b> ค่าบริการวิสัญญีจะไม่ถูกคิด");
+    if (timed && (!d.start||!d.end)) errs.push("ยังไม่ได้กรอกเวลาเริ่ม/สิ้นสุด จึงคิดค่าบริการตามเวลาไม่ได้");
+    if (m!=null && m>12*60) warns.push(`<b>ระยะเวลา ${durTxt(m)}</b> ตรวจสอบเวลาอีกครั้ง`);
+    if ((d.anesType==="GA"||d.anesType==="GAC") && !its.some(i=>AIRWAY_GRPS.includes((BYID[i.id]||{}).grp)))
+      warns.push("<b>GA แต่ยังไม่มีท่อช่วยหายใจ</b> ถ้าใช้ LMA หรือไม่ได้ใส่ท่อ ส่งต่อได้เลย");
+    if (d.anesType==="RA" && !its.some(i=>(BYID[i.id]||{}).grp==="Regional"))
+      warns.push("<b>RA แต่ยังไม่มียาชาในรายการ</b>");
+  }
+  if (codes.has("71 411") && !codes.has("401 2040") && !codes.has("401 2060")) warns.push("<b>มี A-line</b> แต่ยังไม่มี Pressure monitoring kit");
+  if ((codes.has("401 2040")||codes.has("401 2060")) && !codes.has("71 411")) warns.push("<b>มี Pressure monitoring kit</b> แต่ยังไม่มีค่าเปิด A-line (71 411)");
+  its.filter(i=>!i.code).forEach(i=>warns.push(`<b>${esc(i.name)}</b> ไม่มีรหัสในรายการ ผู้คีย์ต้องค้นเอง`));
+  const dup=(S.dayCases||[]).find(c=>c.hn===d.hn && c.id!==d.id && c.id!==d.parentId && c.status!=="cancelled" && c.date===d.date);
+  if (d.hn && dup && !d.parentId) warns.push(`<b>HN นี้ส่งแล้ววันนี้</b> (${esc(dup.room)} เคส ${esc(dup.caseNo)}) ถ้าเป็นรายการเพิ่ม ให้ใช้ "ส่งรายการเพิ่ม" จากเคสเดิม`);
+  return {errs,warns,its,m};
+}
+function reviewList(its){
+  const sec=(k,t)=>{ const a=its.filter(i=>i.sec===k); return a.length?`<div class="h">${t}</div>`+a.map(i=>`<div><span class="mono">${esc(i.code||"—")}</span><span>${esc(i.name)}${i.auto?' <span class="tag auto">อัตโนมัติ</span>':""}</span><span class="q">${i.qty}</span></div>`).join(""):""; };
+  return `<div class="rv">${sec("anes","รายการวิสัญญี")}${sec("med","ยาและเวชภัณฑ์")}</div>`;
+}
+$("#reviewBtn").addEventListener("click", async ()=>{
+  if (!settings.name){ openSettings("กรุณาใส่ชื่อผู้ส่งก่อนส่งรายการ"); return; }
+  try{ S.dayCases = await api("list",{date:S.draft.date}); }catch(e){}
+  const {errs,warns,its,m}=validate(), d=S.draft;
+  openModal(`<h3>${d.id?"ตรวจก่อนบันทึกการแก้ไข":"ตรวจก่อนส่ง"}</h3>
+    <div class="sheet-h"><div class="kv"><span>จุด</span><span>${esc(d.room)} · เคส ${esc(d.caseNo)}</span></div>
+    <div class="kv"><span>HN</span><span class="mono">${esc(d.hn||"—")}</span></div>
+    <div class="kv"><span>Dr.Anes</span><span class="nm-doc">${esc(d.doctor||"—")}</span></div>
+    <div class="kv"><span>ชนิด</span><span>${esc(anesLabel(d.anesType)||"—")}</span></div>
+    <div class="kv"><span>เวลา</span><span>${d.start||"—"}–${d.end||"—"} (${durTxt(m)})</span></div></div>
+    <div class="warns">${errs.map(x=>`<div class="w err">${x}</div>`).join("")}${warns.map(x=>`<div class="w warn">${x}</div>`).join("")}</div>
+    ${its.length?reviewList(its):""}
+    <div class="row" style="justify-content:flex-end;margin-top:14px">
+      <button class="btn" data-close>กลับไปแก้</button>
+      <button class="btn primary" id="doSend" ${errs.length?"disabled":""}>${warns.length?"ยืนยันส่ง (ตรวจแล้ว)":(d.id?"บันทึก":"ส่งให้ผู้คีย์")}</button>
+    </div>`);
+  $("#doSend").onclick = async ()=>{
+    const b=$("#doSend"); b.disabled=true; b.innerHTML='<span class="spin"></span> กำลังส่ง';
+    const c = {id:d.id, date:d.date, room:d.room, caseNo:String(d.caseNo), hn:d.hn, anesType:d.anesType, start:d.start, end:d.end, minutes:m, items:its, note:d.note, doctor:d.doctor||"", sender:settings.name, parentId:d.parentId||""};
+    try{
+      await api("save",{case:c});
+      its.forEach(i=>{ if(!i.auto) S.usage[i.id]=(S.usage[i.id]||0)+1; }); lsSet("ab_usage",S.usage);
+      if (d.doctor){ const ds=lsGet("ab_docs",[]).filter(x=>x!==d.doctor); ds.unshift(d.doctor); lsSet("ab_docs",ds.slice(0,30)); }
+      closeModal(); toast(d.id?"บันทึกการแก้ไขแล้ว":"ส่งแล้ว ผู้คีย์เห็นรายการแล้ว");
+      const room=d.room, date=d.date, doc=d.doctor; S.draft=newDraft(); S.draft.room=room; S.draft.date=date; S.draft.doctor=doc||""; saveDraft(); S.grp=null; S.q=""; $("#q").value="";
+      renderSend(); refreshBadge();
+    }catch(err){ b.disabled=false; b.textContent="ลองส่งอีกครั้ง"; toast(err.message); }
+  };
+});
+
+/* ---------- ROOM LIST ---------- */
+function caseCard(c, sel){
+  const n=(c.items||[]).length;
+  return `<button type="button" class="case s-${c.status} ${sel?"sel":""}" data-id="${c.id}">
+    <div class="case-top"><span class="case-room">${esc(c.room)} · เคส ${esc(c.caseNo)}</span>${stPill(c.status)}</div>
+    <div class="case-sub"><span class="mono">HN ${esc(c.hn)}</span><span>${esc(anesLabel(c.anesType)||"—")}</span>${c.doctor?`<span class="nm nm-doc">${esc(c.doctor)}</span>`:""}<span>${n} รายการ</span>${c.parentId?'<span class="tag">รายการเพิ่ม</span>':""}</div>
+    <div class="case-sub"><span>ส่ง ${hm(c.sentAt)} <span class="nm nm-send">${esc(c.sender||"")}</span></span>${c.keyer?`<span>คีย์ <span class="nm ${keyerCls(c)}">${esc(c.keyer)}</span> ${hm(c.keyedAt||c.keyStart)}</span>`:""}</div>
+    ${c.status==="returned"&&c.returnReason?`<div class="reason">${esc(c.returnReason)}</div>`:""}
+  </button>`;
+}
+async function loadRoom(){
+  $("#rDate").value ||= today(); fillRoomSelect($("#rRoom"), $("#rRoom").value || settings.room || ROOMS[0]);
+  const el=$("#roomCases");
+  try{
+    const cs = await api("list",{date:$("#rDate").value});
+    S.roomCases = cs.filter(c=>c.room===$("#rRoom").value).sort((a,b)=>(+a.caseNo-+b.caseNo)||(a.sentAt>b.sentAt?1:-1));
+    el.innerHTML = S.roomCases.map(c=>caseCard(c)).join("") || `<div class="empty card">ยังไม่มีเคสของ ${esc($("#rRoom").value)} วันที่ ${thDate($("#rDate").value)}</div>`;
+  }catch(e){ el.innerHTML=`<div class="empty card">${esc(e.message)}</div>`; }
+}
+$("#rDate").addEventListener("change",loadRoom); $("#rRoom").addEventListener("change",loadRoom); $("#rRefresh").addEventListener("click",loadRoom);
+$("#roomCases").addEventListener("click",e=>{ const b=e.target.closest(".case"); if(!b) return; const c=S.roomCases.find(x=>x.id===b.dataset.id); if(c) openSenderCase(c); });
+function openSenderCase(c){
+  const canEdit=EDITABLE.includes(c.status), canAdd=["keying","done"].includes(c.status);
+  openModal(`<div class="row" style="justify-content:space-between"><h3 style="margin:0">${esc(c.room)} · เคส ${esc(c.caseNo)}</h3>${stPill(c.status)}</div>
+    <div class="sheet-h" style="margin-top:10px"><div class="kv"><span>HN</span><span class="mono">${esc(c.hn)}</span></div>
+    <div class="kv"><span>Dr.Anes</span><span class="nm-doc">${esc(c.doctor||"—")}</span></div><div class="kv"><span>ชนิด</span><span>${esc(anesLabel(c.anesType)||"—")}</span></div>
+    <div class="kv"><span>เวลา</span><span>${c.start||"—"}–${c.end||"—"}</span></div>
+    <div class="kv"><span>ผู้ส่ง</span><span class="nm-send">${esc(c.sender||"")}</span></div>${c.keyer?`<div class="kv"><span>ผู้คีย์</span><span class="${keyerCls(c)}">${esc(c.keyer)}</span></div>`:""}</div>
+    ${c.returnReason&&c.status==="returned"?`<div class="reason">ผู้คีย์: ${esc(c.returnReason)}</div>`:""}
+    ${c.note?`<p class="muted" style="margin:8px 0">หมายเหตุ: ${esc(c.note)}</p>`:""}
+    ${reviewList(c.items||[])}
+    <div class="row" style="justify-content:flex-end;margin-top:14px">
+      ${canEdit?'<button class="btn danger" id="cxCase">ยกเลิกเคส</button>':""}
+      <button class="btn" data-close>ปิด</button>
+      ${canAdd?'<button class="btn" id="addMore">ส่งรายการเพิ่ม</button>':""}
+      ${canEdit?'<button class="btn primary" id="editCase">แก้ไข</button>':""}
+    </div>
+    ${c.status==="keying"?'<p class="muted" style="font-size:13px;margin:8px 0 0">ผู้คีย์กำลังคีย์เคสนี้อยู่ ถ้าลืมรายการ ให้ใช้ "ส่งรายการเพิ่ม"</p>':""}`);
+  const ed=$("#editCase"); if(ed) ed.onclick=()=>{ loadIntoDraft(c,false); closeModal(); setTab("send"); };
+  const ad=$("#addMore"); if(ad) ad.onclick=()=>{ loadIntoDraft(c,true); closeModal(); setTab("send"); };
+  const cx=$("#cxCase"); if(cx) cx.onclick=()=>confirmBox("ยกเลิกเคสนี้?","ใช้เมื่อเคสงดผ่าตัดหรือส่งซ้ำ ผู้คีย์จะเห็นว่าเคสนี้ถูกยกเลิก","ยกเลิกเคส", async()=>{
+    try{ await api("status",{id:c.id,status:"cancelled",by:settings.name}); toast("ยกเลิกเคสแล้ว"); closeModal(); loadRoom(); refreshBadge(); }catch(e){ toast(e.message); }
+  });
+}
+function loadIntoDraft(c, addMore){
+  const d=newDraft();
+  Object.assign(d,{date:c.date,room:c.room,caseNo:c.caseNo,hn:c.hn,doctor:c.doctor||""});
+  if (addMore){ d.parentId=c.parentId||c.id; d.anesType=""; }
+  else {
+    Object.assign(d,{id:c.id,anesType:c.anesType,start:c.start,end:c.end,note:c.note,parentId:c.parentId||"",returnReason:c.status==="returned"?c.returnReason:""});
+    (c.items||[]).forEach(i=>{ const it=BYID[i.id]||BYCODE[i.code]; if(it){ d.qty[it.id]=+i.qty; if(i.auto) d.autoIds.push(it.id); else if(autoItems(c.anesType,c.minutes).some(a=>a.id===it.id)) { d.autoIds.push(it.id); d.manual[it.id]=true; } } });
+  }
+  S.draft=d; S.grp="เลือกแล้ว"; saveDraft();
+}
+
+/* ---------- KEYER ---------- */
+async function loadKey(silent){
+  $("#kDate").value ||= today();
+  const list=$("#kList");
+  if(!silent) list.innerHTML='<div class="empty"><span class="spin"></span></div>';
+  try{
+    const cs = S.keyMode==="backlog" ? await api("list",{backlog:true}) : await api("list",{date:$("#kDate").value});
+    S.keyCases = cs; $("#kStamp").textContent="อัปเดต "+nowHM();
+    renderKey();
+  }catch(e){ list.innerHTML=`<div class="empty card">${esc(e.message)}</div>`; }
+  refreshBadge();
+}
+function keyVisible(){
+  let cs=S.keyCases;
+  if (S.keyMode==="todo") cs=cs.filter(c=>c.status==="pending"||c.status==="keying");
+  return cs;
+}
+function renderKey(){
+  const cs=keyVisible();
+  const cnt={}; cs.forEach(c=>cnt[c.room]=(cnt[c.room]||0)+1);
+  const rooms=ROOMS.filter(r=>cnt[r]).concat(Object.keys(cnt).filter(r=>!ROOMS.includes(r)));
+  if (S.keyRoom && !cnt[S.keyRoom]) S.keyRoom="";
+  $("#kRooms").innerHTML = `<button class="chip" type="button" data-r="" aria-pressed="${!S.keyRoom}">ทุกจุด<span class="c">${cs.length}</span></button>`+
+    rooms.map(r=>`<button class="chip" type="button" data-r="${esc(r)}" aria-pressed="${S.keyRoom===r}">${esc(r)}<span class="c">${cnt[r]}</span></button>`).join("");
+  const order={keying:0,pending:1,returned:2,done:3,cancelled:4};
+  const shown = cs.filter(c=>!S.keyRoom||c.room===S.keyRoom).sort((a,b)=>(order[a.status]-order[b.status])||(a.date<b.date?-1:a.date>b.date?1:0)||(a.sentAt>b.sentAt?1:-1));
+  $("#kList").innerHTML = shown.map(c=>caseCard(c, S.keySel===c.id).replace('<div class="case-top">', S.keyMode==="backlog"?`<div class="case-sub">${thDate(c.date)}</div><div class="case-top">`:'<div class="case-top">')).join("")
+    || `<div class="empty card">${S.keyMode==="todo"?"ไม่มีเคสรอคีย์ 🎉":"ไม่มีเคส"}</div>`;
+  const sel=S.keyCases.find(c=>c.id===S.keySel);
+  if (sel) renderSheet(sel); else { $("#kDetail").innerHTML = `<div class="card empty">เลือกเคสทางซ้ายเพื่อเปิดใบคีย์</div>`; $("#kDetail").classList.remove("open"); }
+}
+function chk(id){ return S.checks[id]||(S.checks[id]={}); }
+function renderSheet(c){
+  const its=c.items||[], ch=chk(c.id), done=its.filter((_,i)=>ch[i]).length, pct=its.length?Math.round(done*100/its.length):0;
+  const mine = c.status==="keying" && c.keyer===settings.name;
+  const lines=(k,t)=>{ const rows=its.map((it,i)=>({it,i})).filter(x=>x.it.sec===k); if(!rows.length) return "";
+    return `<div class="his"><div class="his-h"><span>${t}</span><span class="muted mono">${rows.filter(x=>ch[x.i]).length}/${rows.length}</span></div>`+
+      rows.map(({it,i})=>`<div class="ln ${ch[i]?"ok":""}" data-i="${i}">
+        <input type="checkbox" ${ch[i]?"checked":""} aria-label="คีย์แล้ว">
+        <span class="ln-code ${it.code?"":"none"}">${it.code?esc(it.code):"ไม่มีรหัส"}</span>
+        <span class="ln-name">${esc(it.name)}${DUPCODES.has(it.code)?' <span class="tag warn">รหัสใช้หลายรายการ เลือกให้ตรงชื่อ</span>':""}</span>
+        <span class="ln-qty">${esc(it.qty)}</span>
+        ${it.code?`<button class="copy" type="button" data-copy="${esc(it.code)}" title="คัดลอกรหัส"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button>`:"<span></span>"}
+      </div>`).join("")+`</div>`; };
+  $("#kDetail").innerHTML = `<div class="card">
+    <div class="row" style="justify-content:space-between;margin-bottom:6px"><button class="btn small k-close" type="button" id="kBack">← กลับ</button>${stPill(c.status)}</div>
+    <div class="sheet-h">
+      <span class="big">${esc(c.room)} · เคส ${esc(c.caseNo)}</span>
+      <div class="kv"><span>HN</span><span class="mono" style="font-size:18px">${esc(c.hn)} <button class="copy" type="button" data-copy="${esc(c.hn)}" title="คัดลอก HN" style="display:inline-grid;vertical-align:middle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button></span></div>
+      <div class="kv"><span>Dr.Anes</span><span class="nm-doc">${esc(c.doctor||"—")}</span></div><div class="kv"><span>ชนิด</span><span>${esc(anesLabel(c.anesType)||"—")}</span></div>
+      <div class="kv"><span>เวลา</span><span>${c.start||"—"}–${c.end||"—"} (${durTxt(c.minutes===""?null:c.minutes)})</span></div>
+      <div class="kv"><span>วันที่</span><span>${thDate(c.date)}</span></div>
+      <div class="kv"><span>ผู้ส่ง</span><span><span class="nm-send">${esc(c.sender||"")}</span> ${hm(c.sentAt)}</span></div>${c.keyer?`<div class="kv"><span>ผู้คีย์</span><span class="${keyerCls(c)}">${esc(c.keyer)}</span></div>`:""}
+    </div>
+    ${c.parentId?'<div class="w warn" style="margin-bottom:8px"><b>รายการเพิ่มเติม</b> ของเคสเดิม คีย์เพิ่มใน visit เดิม</div>':""}
+    ${c.note?`<div class="w warn"><b>หมายเหตุ:</b> ${esc(c.note)}</div>`:""}
+    ${c.status==="returned"?`<div class="reason" style="margin-top:8px">ส่งกลับแล้ว: ${esc(c.returnReason)}</div>`:""}
+    <div class="progress" title="คีย์แล้ว ${done}/${its.length}"><i style="width:${pct}%"></i></div>
+    ${lines("anes","รายการวิสัญญี")}${lines("med","รายการยาและเวชภัณฑ์")}
+    <div class="k-actions">
+      ${c.status==="pending"?'<button class="btn primary" id="kStart">เริ่มคีย์</button>':""}
+      ${c.status==="keying"&&!mine?`<span class="muted"><span class="nm nm-keying">${esc(c.keyer)}</span> กำลังคีย์</span>`:""}
+      ${mine?'<button class="btn" id="kRelease">ปล่อยคืนคิว</button>':""}
+      ${(c.status==="pending"||c.status==="keying")?'<button class="btn danger" id="kReturn">ส่งกลับแก้ไข</button>':""}
+      ${(c.status==="pending"||mine)?`<button class="btn primary" id="kDone">คีย์เสร็จ (${done}/${its.length})</button>`:""}
+    </div></div>`;
+  $("#kDetail").classList.add("open");
+  const go=async(status,extra,msg)=>{ try{ await api("status",Object.assign({id:c.id,status,by:settings.name},extra||{})); toast(msg); if(status==="done"||status==="returned"){ S.keySel=null; } await loadKey(true); }catch(e){ toast(e.message); loadKey(true);} };
+  const need=()=>{ if(!settings.name){ openSettings("กรุณาใส่ชื่อผู้คีย์ก่อน"); return false;} return true; };
+  const st=$("#kStart"); if(st) st.onclick=()=>need()&&go("keying",null,"รับเคสแล้ว");
+  const rl=$("#kRelease"); if(rl) rl.onclick=()=>go("pending",null,"ปล่อยคืนคิวแล้ว");
+  const dn=$("#kDone"); if(dn) dn.onclick=()=>{ if(!need()) return;
+    if (done<its.length) confirmBox("ยังติ๊กไม่ครบ",`คีย์แล้ว ${done} จาก ${its.length} รายการ ยืนยันว่าคีย์ครบใน HosXP แล้ว?`,"ยืนยัน คีย์ครบแล้ว",()=>{closeModal();go("done",null,"บันทึกว่าคีย์เสร็จแล้ว");});
+    else go("done",null,"บันทึกว่าคีย์เสร็จแล้ว"); };
+  const rt=$("#kReturn"); if(rt) rt.onclick=()=>{ if(!need()) return;
+    openModal(`<h3>ส่งกลับให้ผู้ส่งแก้ไข</h3><label class="field"><span class="label">เหตุผล / สิ่งที่ต้องแก้</span><textarea class="input" id="rsn" rows="3" placeholder="เช่น HN ไม่ตรงกับ HosXP, จำนวน Propofol ไม่ชัด"></textarea></label>
+      <div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" data-close>ยกเลิก</button><button class="btn danger" id="doRt">ส่งกลับ</button></div>`);
+    $("#rsn").focus();
+    $("#doRt").onclick=()=>{ const r=$("#rsn").value.trim(); if(!r){ $("#rsn").focus(); return;} closeModal(); go("returned",{reason:r},"ส่งกลับแล้ว"); }; };
+  const bk=$("#kBack"); if(bk) bk.onclick=()=>{ S.keySel=null; $("#kDetail").classList.remove("open"); renderKey(); };
+}
+$("#kDetail").addEventListener("click",e=>{
+  const cp=e.target.closest("[data-copy]");
+  if (cp){ e.stopPropagation(); let v=cp.dataset.copy; if(settings.copyNoSpace) v=v.replace(/\s+/g,"");
+    try{ navigator.clipboard.writeText(v).then(()=>toast("คัดลอก "+v),()=>toast(v)); }catch(err){ toast(v); } return; }
+  const ln=e.target.closest(".ln"); if(!ln) return;
+  const c=S.keyCases.find(x=>x.id===S.keySel); if(!c) return;
+  const ch=chk(c.id), i=ln.dataset.i; ch[i]=!ch[i]; lsSet("ab_checks",S.checks); renderSheet(c);
+});
+$("#kList").addEventListener("click",e=>{ const b=e.target.closest(".case"); if(!b) return; S.keySel=b.dataset.id; renderKey(); });
+$("#kRooms").addEventListener("click",e=>{ const b=e.target.closest(".chip"); if(!b) return; S.keyRoom=b.dataset.r; renderKey(); });
+$("#kMode").addEventListener("click",e=>{ const b=e.target.closest(".chip"); if(!b) return; S.keyMode=b.dataset.m; document.querySelectorAll("#kMode .chip").forEach(x=>x.setAttribute("aria-pressed",x===b)); $("#kDate").disabled=S.keyMode==="backlog"; loadKey(); });
+$("#kDate").addEventListener("change",()=>loadKey()); $("#kRefresh").addEventListener("click",()=>loadKey());
+async function refreshBadge(){
+  try{ const cs=await api("list",{backlog:true}); const n=cs.filter(c=>c.status==="pending").length; const el=$("#pendN"); el.hidden=!n; el.textContent=n; }catch(e){}
+}
+
+/* ---------- SUMMARY ---------- */
+function tally(cs){
+  const by=new Map(), mk=r=>({room:r,total:0,pending:0,keying:0,returned:0,done:0,cancelled:0,items:0});
+  ROOMS.forEach(r=>by.set(r,mk(r)));
+  cs.forEach(c=>{ if(!by.has(c.room)) by.set(c.room,mk(c.room)); const r=by.get(c.room); r[c.status]=(r[c.status]||0)+1; if(c.status!=="cancelled"){ r.total++; r.items+=(c.items||[]).length; } });
+  return [...by.values()];
+}
+async function loadSum(){
+  $("#sDate").value ||= today(); $("#mMonth").value ||= today().slice(0,7);
+  try{
+    const cs=await api("list",{date:$("#sDate").value}), rows=tally(cs);
+    const T=rows.reduce((a,r)=>{["total","pending","keying","returned","done","cancelled","items"].forEach(k=>a[k]+=r[k]); return a;},{total:0,pending:0,keying:0,returned:0,done:0,cancelled:0,items:0});
+    $("#sTiles").innerHTML = `<div class="tile"><b>${T.total}</b><span>เคสที่ส่ง</span></div><div class="tile p"><b>${T.pending+T.keying}</b><span>รอคีย์ / กำลังคีย์</span></div><div class="tile r"><b>${T.returned}</b><span>ส่งกลับแก้ไข</span></div><div class="tile d"><b>${T.done}</b><span>คีย์แล้ว</span></div>`;
+    $("#sTable").innerHTML = `<thead><tr><th>จุดบริการ</th><th class="n">เคส</th><th class="n">รอคีย์</th><th class="n">กำลังคีย์</th><th class="n">ส่งกลับ</th><th class="n">คีย์แล้ว</th><th class="n">ยกเลิก</th><th class="n">รายการ</th></tr></thead><tbody>`+
+      rows.map(r=>`<tr class="${r.total?"":"zero"}"><td>${esc(r.room)}</td><td class="n">${r.total}</td><td class="n">${r.pending||""}</td><td class="n">${r.keying||""}</td><td class="n">${r.returned||""}</td><td class="n">${r.done||""}</td><td class="n">${r.cancelled||""}</td><td class="n">${r.items||""}</td></tr>`).join("")+
+      `</tbody><tfoot><tr><td>รวม</td><td class="n">${T.total}</td><td class="n">${T.pending}</td><td class="n">${T.keying}</td><td class="n">${T.returned}</td><td class="n">${T.done}</td><td class="n">${T.cancelled}</td><td class="n">${T.items}</td></tr></tfoot>`;
+  }catch(e){ $("#sTable").innerHTML=`<tbody><tr><td>${esc(e.message)}</td></tr></tbody>`; }
+}
+$("#sDate").addEventListener("change",loadSum); $("#sRefresh").addEventListener("click",loadSum);
+$("#expBtn").addEventListener("click", async ()=>{
+  const mo=$("#mMonth").value, msg=$("#expMsg"); if(!mo) return;
+  if (typeof XLSX==="undefined"){ msg.textContent="โหลดตัวสร้างไฟล์ Excel ไม่ได้ ตรวจอินเทอร์เน็ตแล้วลองใหม่"; return; }
+  msg.innerHTML='<span class="spin"></span> กำลังเตรียมไฟล์';
+  try{
+    const cs=(await api("list",{month:mo})).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:ROOMS.indexOf(a.room)-ROOMS.indexOf(b.room)||(+a.caseNo-+b.caseNo));
+    const caseRows=cs.map(c=>({"วันที่":c.date,"จุดบริการ":c.room,"เคสที่":+c.caseNo||c.caseNo,"HN":c.hn,"Dr.Anes":c.doctor||"","ชนิด":anesLabel(c.anesType),"เริ่ม":c.start,"สิ้นสุด":c.end,"นาที":c.minutes,"จำนวนรายการ":(c.items||[]).length,"สถานะ":STATUS[c.status]||c.status,"ผู้ส่ง":c.sender,"เวลาส่ง":hm(c.sentAt),"ผู้คีย์":c.keyer||"","เวลาคีย์เสร็จ":hm(c.keyedAt),"เหตุผลส่งกลับ":c.returnReason||"","รายการเพิ่ม":c.parentId?"ใช่":"","หมายเหตุ":c.note||""}));
+    const itemRows=[]; cs.forEach(c=>(c.items||[]).forEach(i=>itemRows.push({"วันที่":c.date,"จุดบริการ":c.room,"เคสที่":+c.caseNo||c.caseNo,"HN":c.hn,"หมวด":i.sec==="anes"?"วิสัญญี":"ยา/เวชภัณฑ์","รหัส":i.code,"รายการ":i.name,"จำนวน":+i.qty,"อัตโนมัติ":i.auto?"ใช่":"","สถานะเคส":STATUS[c.status]||c.status,"ผู้คีย์":c.keyer||""})));
+    const roomRows=tally(cs).map(r=>({"จุดบริการ":r.room,"เคส":r.total,"คีย์แล้ว":r.done,"ค้าง":r.pending+r.keying+r.returned,"ยกเลิก":r.cancelled,"รายการ":r.items}));
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(caseRows),"เคส");
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(itemRows),"รายการ");
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(roomRows),"สรุปรายจุด");
+    XLSX.writeFile(wb,`AnesBill_${mo}.xlsx`);
+    msg.textContent=`ดาวน์โหลด AnesBill_${mo}.xlsx (${cs.length} เคส, ${itemRows.length} รายการ) ถ้าไฟล์ไม่ขึ้น ให้เปิดแอปจากลิงก์ใช้งานจริง`;
+  }catch(e){ msg.textContent=e.message; }
+});
+$("#delBtn").addEventListener("click",()=>{
+  const mo=$("#mMonth").value; if(!mo) return;
+  openModal(`<h3>ล้างข้อมูลเดือน ${esc(mo)}</h3>
+    <p>ทุกเคสในเดือนนี้จะถูกลบออกจากระบบถาวร <b>ดาวน์โหลด Excel เก็บไว้ก่อน</b></p>
+    <div class="stack">
+      <label class="field"><span class="label">พิมพ์ ${esc(mo)} เพื่อยืนยัน</span><input class="input mono" id="cfm" autocomplete="off"></label>
+      ${isLive()?'<label class="field"><span class="label">รหัสผู้ดูแล (ADMIN PIN)</span><input class="input mono" id="apin" type="password" autocomplete="off"></label>':""}
+    </div>
+    <div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" data-close>ยกเลิก</button><button class="btn danger" id="doDel">ลบข้อมูลเดือนนี้</button></div>`);
+  $("#doDel").onclick=async()=>{
+    if ($("#cfm").value.trim()!==mo){ toast("พิมพ์เดือนให้ตรงก่อน"); return; }
+    try{ const r=await api("deleteMonth",{month:mo,adminPin:($("#apin")||{}).value||""}); closeModal(); toast(`ลบแล้ว ${r.deleted} เคส`); loadSum(); refreshBadge(); }catch(e){ toast(e.message); }
+  };
+});
+
+/* ---------- modal / settings ---------- */
+function openModal(html){ $("#modal").innerHTML=html; $("#ov").hidden=false; }
+function closeModal(){ $("#ov").hidden=true; $("#modal").innerHTML=""; }
+$("#ov").addEventListener("click",e=>{ if(e.target.id==="ov"||e.target.closest("[data-close]")) closeModal(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape" && !$("#ov").hidden) closeModal(); });
+function confirmBox(title,body,okText,fn){
+  openModal(`<h3>${esc(title)}</h3><p>${esc(body)}</p><div class="row" style="justify-content:flex-end"><button class="btn" data-close>กลับ</button><button class="btn danger" id="cbOk">${esc(okText)}</button></div>`);
+  $("#cbOk").onclick=fn;
+}
+function keyerCls(c){ return c.status==="keying"?"nm-keying":c.status==="done"?"nm-done":"nm-other"; }
+function renderWho(){
+  const w=$("#whoBtn"), nm=settings.name;
+  w.classList.toggle("unset", !nm);
+  w.innerHTML = `<span class="av">${nm?esc([...nm][0]):"?"}</span><span>${esc(nm||"ตั้งชื่อผู้ใช้")}${settings.room?" · "+esc(settings.room):""}</span>`;
+  $("#demoBanner").hidden = isLive();
+}
+function openSettings(msg){
+  openModal(`<h3>ตั้งค่า</h3>${msg?`<div class="w warn" style="margin-bottom:10px">${esc(msg)}</div>`:""}
+  <div class="stack">
+    <label class="field"><span class="label">ชื่อ (แสดงเป็นผู้ส่ง / ผู้คีย์)</span><input class="input" id="stName" value="${esc(settings.name)}" placeholder="เช่น ปุ๊ วสญ."></label>
+    <label class="field"><span class="label">จุดประจำ (ค่าเริ่มต้นของฟอร์ม)</span><select class="input" id="stRoom"><option value="">— ไม่ระบุ —</option>${ROOMS.map(r=>`<option ${r===settings.room?"selected":""}>${esc(r)}</option>`).join("")}</select></label>
+    <label class="row" style="gap:10px"><input type="checkbox" id="stNs" ${settings.copyNoSpace?"checked":""} style="width:18px;height:18px"> <span>ปุ่มคัดลอกรหัส ตัดช่องว่างออก (70 110 → 70110)</span></label>
+    <details ${isLive()?"":"open"}><summary style="cursor:pointer;font-weight:600">การเชื่อมต่อ (ผู้ดูแลระบบ)</summary>
+      <div class="stack" style="margin-top:10px">
+        <label class="field"><span class="label">ลิงก์ Apps Script Web App</span><input class="input mono" id="stApi" value="${esc(settings.api)}" placeholder="https://script.google.com/macros/s/…/exec" style="font-size:13px"></label>
+        <label class="field"><span class="label">รหัสทีม (APP PIN)</span><input class="input mono" id="stPin" type="password" value="${esc(settings.pin)}" autocomplete="off"></label>
+        <p class="muted" style="margin:0;font-size:13px">เว้นลิงก์ว่างไว้ = โหมดทดลอง ข้อมูลอยู่ในเครื่องนี้เท่านั้น</p>
+      </div></details>
+  </div>
+  <div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn" data-close>ปิด</button><button class="btn primary" id="stSave">บันทึก</button></div>`);
+  $("#stSave").onclick=async()=>{
+    settings.name=$("#stName").value.trim(); settings.room=$("#stRoom").value; settings.copyNoSpace=$("#stNs").checked;
+    const api0=settings.api; settings.api=$("#stApi").value.trim(); settings.pin=$("#stPin").value;
+    lsSet("ab_settings",settings); closeModal(); renderWho();
+    if (settings.room && !S.draft.id && !S.draft.hn){ S.draft.room=settings.room; S.draft.caseNo=""; saveDraft(); }
+    if (settings.api && settings.api!==api0){ try{ await api("ping"); toast("เชื่อมต่อสำเร็จ"); await loadConfig(); }catch(e){ toast("เชื่อมต่อไม่ได้: "+e.message); } }
+    else toast("บันทึกแล้ว");
+    setTab(S.tab);
+  };
+}
+$("#whoBtn").addEventListener("click",()=>openSettings());
+async function loadConfig(){
+  if (!isLive()) return;
+  try{ const c=await api("config"); if(c){ if(c.items&&c.items.length){ ITEMS=c.items; indexItems(); } if(c.rooms&&c.rooms.length) ROOMS=c.rooms; } }catch(e){}
+}
+
+/* ---------- boot ---------- */
+setInterval(()=>{ if(document.visibilityState!=="visible" || !$("#ov").hidden) return;
+  if(S.tab==="key") loadKey(true); else if(S.tab==="room") loadRoom(); else if(S.tab==="sum") loadSum(); else refreshBadge(); }, CONFIG.POLL_SECONDS*1000);
+(async()=>{
+  renderWho();
+  await loadConfig();
+  if (!ROOMS.includes(S.draft.room)) S.draft.room=settings.room||ROOMS[0];
+  setTab(S.tab); refreshBadge();
+  if (isLive() && !settings.name) openSettings("ยินดีต้อนรับ ใส่ชื่อและจุดประจำก่อนเริ่มใช้งาน");
+})();
+try{ if ("serviceWorker" in navigator && location.protocol==="https:" && !/claude|claudeusercontent/.test(location.hostname)) navigator.serviceWorker.register("sw.js").catch(()=>{}); }catch(e){}
+</script>
+
+</body>
+</html>
