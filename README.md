@@ -1,7 +1,7 @@
 # AnesBill: คู่มือติดตั้ง
 
 ระบบนี้มี 2 ส่วน
-- **แอป (PWA):** `index.html`, `manifest.json`, `sw.js`, `icon-192.png`, `icon-512.png` วางบน GitHub Pages
+- **แอป (PWA):** `index.html`, `manifest.json`, `sw.js`, `icon-192.png`, `icon-512.png`, `icon-maskable-512.png`, `apple-touch-icon.png` วางบน GitHub Pages
 - **ที่เก็บข้อมูล:** `Code.gs` วางใน Google Sheet (Apps Script)
 
 ## 1. ตั้งค่า Google Sheet + Apps Script (ทำครั้งเดียว)
@@ -20,7 +20,7 @@
 
 ## 2. วางแอปบน GitHub Pages
 1. เปิด `index.html` หาบรรทัด `API_URL: ""` แล้ววาง URL `/exec` ลงในเครื่องหมายคำพูด
-2. อัปโหลด 5 ไฟล์ของแอปขึ้น repo (จะสร้าง repo ใหม่ หรือใช้โฟลเดอร์ใน repo AnesHub เดิมก็ได้) แล้วเปิด GitHub Pages
+2. อัปโหลด 7 ไฟล์ของแอปขึ้น repo (จะสร้าง repo ใหม่ หรือใช้โฟลเดอร์ใน repo AnesHub เดิมก็ได้) แล้วเปิด GitHub Pages
 3. เปิดลิงก์ แล้วกดปุ่มชื่อมุมขวาบน ใส่ **ชื่อ**, **จุดประจำ** และ **รหัสทีม (APP PIN)**
 4. บนมือถือ กด "เพิ่มไปยังหน้าจอหลัก" เพื่อใช้งานเหมือนแอป
 
