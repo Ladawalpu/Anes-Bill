@@ -114,6 +114,7 @@ h2{font-family:var(--f-display);font-size:19px;margin:0 0 4px;text-wrap:balance;
 .chip.gc .c{opacity:1;font-weight:700}
 .grp-h.gc{color:var(--gc);font-weight:700;background:color-mix(in srgb,var(--gc) 8%,var(--surface2))}
 .chip .c{font-size:12px;opacity:.8;margin-left:4px}
+.chip .c.warn-c{opacity:1;display:inline-block;min-width:20px;padding:0 6px;border-radius:999px;background:var(--bad);color:var(--surface);font-weight:700;text-align:center}
 
 /* sender */
 .send-grid{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:16px;align-items:start}
@@ -179,7 +180,9 @@ h2{font-family:var(--f-display);font-size:19px;margin:0 0 4px;text-wrap:balance;
 .kv span:last-child{font-weight:600}
 .his{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:12px}
 .his-h{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:8px 12px;background:var(--surface2);font-weight:600;font-size:14px;border-bottom:1px solid var(--line)}
-.ln{display:grid;grid-template-columns:minmax(92px,auto) minmax(0,1fr) 56px 40px;gap:10px;align-items:center;padding:9px 12px;border-top:1px solid var(--line)}
+.ln{display:grid;grid-template-columns:24px minmax(92px,auto) minmax(0,1fr) 56px 40px;gap:10px;align-items:center;padding:9px 12px;border-top:1px solid var(--line)}
+.lnck{width:20px;height:20px;margin:0;accent-color:var(--done);cursor:pointer}
+.lnck:disabled{cursor:default;opacity:.45}
 .kstart{display:flex;align-items:center;gap:14px;width:100%;margin:4px 0 14px;padding:14px 16px;border:0;border-radius:12px;background:var(--keying);color:var(--surface);text-align:left;box-shadow:0 0 0 4px var(--keying-soft)}
 .kstart:hover{filter:brightness(1.08)}
 .kstart-ic{width:40px;height:40px;flex:none;border-radius:50%;background:color-mix(in srgb,var(--surface) 22%,transparent);display:grid;place-items:center;font-size:18px}
@@ -251,11 +254,12 @@ tfoot td{font-weight:700;background:var(--surface2)}
 }
 @media (max-width:520px){
   .grid3{grid-template-columns:1fr 1fr}
-  .ln{grid-template-columns:minmax(0,1fr) 44px 36px;row-gap:2px}
-  .ln-code{grid-column:1;font-size:17px}
-  .ln-name{grid-column:1;grid-row:2;font-size:13.5px}
-  .ln-qty{grid-column:2;grid-row:1/3}
-  .ln .copy{grid-column:3;grid-row:1/3}
+  .ln{grid-template-columns:22px minmax(0,1fr) 44px 36px;row-gap:2px}
+  .lnck{grid-column:1;grid-row:1/3}
+  .ln-code{grid-column:2;font-size:17px}
+  .ln-name{grid-column:2;grid-row:2;font-size:13.5px}
+  .ln-qty{grid-column:3;grid-row:1/3}
+  .ln .copy{grid-column:4;grid-row:1/3}
 }
 </style>
 </head>
@@ -818,7 +822,8 @@ async function loadKey(silent){
   const list=$("#kList");
   if(!silent) list.innerHTML='<div class="empty"><span class="spin"></span></div>';
   try{
-    const cs = S.keyMode==="backlog" ? await api("list",{backlog:true}) : await api("list",{date:$("#kDate").value});
+    $("#kDate").disabled = S.keyMode==="backlog";
+    const cs = S.keyMode==="backlog" ? await api("list",{backlog:true}) : await api("list",{date:$("#kDate").value});   // รอคีย์/ทั้งหมด = ตามวันที่เลือก
     S.keyCases = cs; $("#kStamp").textContent="อัปเดต "+nowHM();
     renderKey();
   }catch(e){ list.innerHTML=`<div class="empty card">${esc(e.message)}</div>`; }
@@ -838,7 +843,7 @@ function renderKey(){
     rooms.map(r=>`<button class="chip" type="button" data-r="${esc(r)}" aria-pressed="${S.keyRoom===r}">${esc(r)}<span class="c">${cnt[r]}</span></button>`).join("");
   const order={keying:0,pending:1,returned:2,done:3,cancelled:4};
   const shown = cs.filter(c=>!S.keyRoom||c.room===S.keyRoom).sort((a,b)=>(order[a.status]-order[b.status])||(a.date<b.date?-1:a.date>b.date?1:0)||(a.sentAt>b.sentAt?1:-1));
-  $("#kList").innerHTML = shown.map(c=>caseCard(c, S.keySel===c.id).replace('<div class="case-top">', S.keyMode==="backlog"?`<div class="case-sub">${thDate(c.date)}</div><div class="case-top">`:'<div class="case-top">')).join("")
+  $("#kList").innerHTML = shown.map(c=>caseCard(c, S.keySel===c.id).replace('<div class="case-top">', c.date!==today()?`<div class="case-sub"><span class="tag warn">ค้างจาก ${thDate(c.date)}</span></div><div class="case-top">`:'<div class="case-top">')).join("")
     || `<div class="empty card">${S.keyMode==="todo"?"ไม่มีเคสรอคีย์ 🎉":"ไม่มีเคส"}</div>`;
   const sel=S.keyCases.find(c=>c.id===S.keySel);
   if (sel) renderSheet(sel); else { $("#kDetail").innerHTML = `<div class="card empty">เลือกเคสทางซ้ายเพื่อเปิดใบคีย์</div>`; $("#kDetail").classList.remove("open"); }
@@ -848,8 +853,10 @@ function renderSheet(c){
   const its=c.items||[], ch=chk(c.id), allOk=!!ch.all;
   const mine = c.status==="keying" && c.keyer===settings.name;
   const lines=(k,t)=>{ const rows=its.map((it,i)=>({it,i})).filter(x=>x.it.sec===k); if(!rows.length) return "";
-    return `<div class="his"><div class="his-h"><span>${t}</span><span class="muted mono">${rows.length} รายการ</span></div>`+
-      rows.map(({it,i})=>`<div class="ln ${allOk?"ok":""}">
+    const nOk=rows.filter(x=>ch[x.i]).length;
+    return `<div class="his"><div class="his-h"><span>${t}</span><span class="muted mono">${nOk?nOk+"/":""}${rows.length} รายการ</span></div>`+
+      rows.map(({it,i})=>`<div class="ln ${allOk||ch[i]?"ok":""}">
+        <input type="checkbox" class="lnck" data-i="${i}" ${ch[i]||allOk?"checked":""} ${mine&&!allOk?"":"disabled"} aria-label="ติ๊กว่าคีย์รายการนี้แล้ว (ไม่บังคับ)">
         <span class="ln-code ${it.code?"":"none"}">${it.code?esc(it.code):"ไม่มีรหัส"}</span>
         <span class="ln-name">${esc(it.name)}${DUPCODES.has(it.code)?' <span class="tag warn">รหัสใช้หลายรายการ เลือกให้ตรงชื่อ</span>':""}</span>
         <span class="ln-qty">${esc(it.qty)}</span>
@@ -884,6 +891,10 @@ function renderSheet(c){
   const st=$("#kStart"); if(st) st.onclick=()=>need()&&go("keying",null,"รับเคสแล้ว");
   const rl=$("#kRelease"); if(rl) rl.onclick=()=>go("pending",null,"ปล่อยคืนคิวแล้ว");
   const ka=$("#kAll"); if(ka) ka.onchange=()=>{ ch.all=ka.checked; lsSet("ab_checks",S.checks); renderSheet(c); };
+  /* ติ๊กรายบรรทัด: ไม่บังคับ ช่วยกันหลงเท่านั้น ติ๊กครบทุกบรรทัดแล้วกล่อง "คีย์ครบทุกรายการ" จะติ๊กให้เอง */
+  $("#kDetail").querySelectorAll(".lnck").forEach(cb=>cb.onchange=()=>{ ch[cb.dataset.i]=cb.checked;
+    if (its.length && its.every((_,i)=>ch[i])) ch.all=true;
+    lsSet("ab_checks",S.checks); renderSheet(c); });
   const dn=$("#kDone"); if(dn) dn.onclick=()=>{ if(!need()) return;
     if (!ch.all){ toast("ติ๊ก 'คีย์ครบทุกรายการ' ก่อน"); return; }
     go("done",null,"บันทึกว่าคีย์เสร็จแล้ว"); };
@@ -903,10 +914,16 @@ $("#kDetail").addEventListener("click",e=>{
 });
 $("#kList").addEventListener("click",e=>{ const b=e.target.closest(".case"); if(!b) return; S.keySel=b.dataset.id; renderKey(); });
 $("#kRooms").addEventListener("click",e=>{ const b=e.target.closest(".chip"); if(!b) return; S.keyRoom=b.dataset.r; renderKey(); });
-$("#kMode").addEventListener("click",e=>{ const b=e.target.closest(".chip"); if(!b) return; S.keyMode=b.dataset.m; document.querySelectorAll("#kMode .chip").forEach(x=>x.setAttribute("aria-pressed",x===b)); $("#kDate").disabled=S.keyMode==="backlog"; loadKey(); });
-$("#kDate").addEventListener("change",()=>loadKey()); $("#kRefresh").addEventListener("click",()=>loadKey());
+$("#kMode").addEventListener("click",e=>{ const b=e.target.closest(".chip"); if(!b) return; S.keyMode=b.dataset.m; document.querySelectorAll("#kMode .chip").forEach(x=>x.setAttribute("aria-pressed",x===b)); loadKey(); });
+$("#kDate").addEventListener("change",()=>{ loadKey(); }); $("#kRefresh").addEventListener("click",()=>loadKey());
 async function refreshBadge(){
-  try{ const cs=await api("list",{backlog:true}); const n=cs.filter(c=>c.status==="pending").length; const el=$("#pendN"); el.hidden=!n; el.textContent=n; }catch(e){}
+  try{
+    const D=$("#kDate").value||today(), cs=await api("list",{backlog:true});
+    const n=cs.filter(c=>c.date===D && (c.status==="pending"||c.status==="keying")).length;   /* ตัวเลขบนแท็บ = รอคีย์ของวันที่เลือก */
+    const el=$("#pendN"); el.hidden=!n; el.textContent=n;
+    const other=cs.filter(c=>c.date!==D).length, bc=$('#kMode .chip[data-m="backlog"]');   /* เคสค้างวันอื่น แสดงบนปุ่ม "ค้างทุกวัน" */
+    if (bc) bc.innerHTML = "ค้างทุกวัน" + (other?`<span class="c warn-c">${other}</span>`:"");
+  }catch(e){}
 }
 
 /* ---------- SUMMARY ---------- */
