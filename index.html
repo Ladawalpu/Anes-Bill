@@ -180,6 +180,14 @@ h2{font-family:var(--f-display);font-size:19px;margin:0 0 4px;text-wrap:balance;
 .his{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:12px}
 .his-h{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:8px 12px;background:var(--surface2);font-weight:600;font-size:14px;border-bottom:1px solid var(--line)}
 .ln{display:grid;grid-template-columns:minmax(92px,auto) minmax(0,1fr) 56px 40px;gap:10px;align-items:center;padding:9px 12px;border-top:1px solid var(--line)}
+.kstart{display:flex;align-items:center;gap:14px;width:100%;margin:4px 0 14px;padding:14px 16px;border:0;border-radius:12px;background:var(--keying);color:var(--surface);text-align:left;box-shadow:0 0 0 4px var(--keying-soft)}
+.kstart:hover{filter:brightness(1.08)}
+.kstart-ic{width:40px;height:40px;flex:none;border-radius:50%;background:color-mix(in srgb,var(--surface) 22%,transparent);display:grid;place-items:center;font-size:18px}
+.kstart b{display:block;font-size:19px;font-family:var(--f-display)}
+.kstart small{display:block;font-size:13px;opacity:.9}
+@media (prefers-reduced-motion:no-preference){.kstart{animation:kpulse 1.8s ease-in-out infinite}}
+@keyframes kpulse{50%{box-shadow:0 0 0 8px var(--keying-soft)}}
+.kmine{margin:2px 0 12px;padding:8px 12px;border-radius:10px;background:var(--keying-soft);color:var(--keying);font-weight:600;font-size:14px}
 .allok{display:flex;align-items:center;gap:12px;margin-top:14px;padding:12px 14px;border:2px dashed color-mix(in srgb,var(--done) 45%,var(--line));border-radius:12px;background:var(--surface2);font-weight:600;cursor:pointer}
 .allok input{width:24px;height:24px;flex:none;accent-color:var(--done)}
 .allok.on{border-style:solid;border-color:var(--done);background:var(--done-soft);color:var(--done)}
@@ -849,6 +857,8 @@ function renderSheet(c){
       </div>`).join("")+`</div>`; };
   $("#kDetail").innerHTML = `<div class="card">
     <div class="row" style="justify-content:space-between;margin-bottom:6px"><button class="btn small k-close" type="button" id="kBack">← กลับ</button>${stPill(c.status)}</div>
+    ${c.status==="pending"?`<button class="kstart" type="button" id="kStart"><span class="kstart-ic">▶</span><span><b>เริ่มคีย์</b><small>กดก่อนเปิด HosXP ทุกครั้ง เพื่อรับเคสนี้</small></span></button>`:""}
+    ${mine?`<div class="kmine">● คุณกำลังคีย์เคสนี้</div>`:""}
     <div class="sheet-h">
       <span class="big">${esc(c.room)} · เคส ${esc(c.caseNo)}</span>
       <div class="kv"><span>HN</span><span class="mono" style="font-size:18px">${esc(c.hn)} <button class="copy" type="button" data-copy="${esc(c.hn)}" title="คัดลอก HN" style="display:inline-grid;vertical-align:middle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button></span></div>
@@ -861,13 +871,12 @@ function renderSheet(c){
     ${c.note?`<div class="w warn"><b>หมายเหตุ:</b> ${esc(c.note)}</div>`:""}
     ${c.status==="returned"?`<div class="reason" style="margin-top:8px">ส่งกลับแล้ว: ${esc(c.returnReason)}</div>`:""}
     ${lines("anes","รายการวิสัญญี")}${lines("med","รายการยาและเวชภัณฑ์")}
-    ${(c.status==="pending"||mine)?`<label class="allok ${allOk?"on":""}"><input type="checkbox" id="kAll" ${allOk?"checked":""}><span>คีย์ครบทุกรายการ (${its.length} รายการ) ใน HosXP แล้ว</span></label>`:""}
+    ${mine?`<label class="allok ${allOk?"on":""}"><input type="checkbox" id="kAll" ${allOk?"checked":""}><span>คีย์ครบทุกรายการ (${its.length} รายการ) ใน HosXP แล้ว</span></label>`:""}
     <div class="k-actions">
-      ${c.status==="pending"?'<button class="btn primary" id="kStart">เริ่มคีย์</button>':""}
       ${c.status==="keying"&&!mine?`<span class="muted"><span class="nm nm-keying">${esc(c.keyer)}</span> กำลังคีย์</span>`:""}
       ${mine?'<button class="btn" id="kRelease">ปล่อยคืนคิว</button>':""}
       ${(c.status==="pending"||c.status==="keying")?'<button class="btn danger" id="kReturn">ส่งกลับแก้ไข</button>':""}
-      ${(c.status==="pending"||mine)?`<button class="btn primary" id="kDone" ${allOk?"":"disabled"}>คีย์เสร็จ</button>`:""}
+      ${mine?`<button class="btn primary" id="kDone" ${allOk?"":"disabled"}>คีย์เสร็จ</button>`:""}
     </div></div>`;
   $("#kDetail").classList.add("open");
   const go=async(status,extra,msg)=>{ try{ await api("status",Object.assign({id:c.id,status,by:settings.name},extra||{})); toast(msg); if(status==="done"||status==="returned"){ S.keySel=null; } await loadKey(true); }catch(e){ toast(e.message); loadKey(true);} };
@@ -888,6 +897,8 @@ function renderSheet(c){
 $("#kDetail").addEventListener("click",e=>{
   const cp=e.target.closest("[data-copy]");
   if (cp){ e.stopPropagation(); let v=cp.dataset.copy; if(settings.copyNoSpace) v=v.replace(/\s+/g,"");
+    const cc=S.keyCases.find(x=>x.id===S.keySel);
+    if (cc && cc.status==="pending" && settings.name){ api("status",{id:cc.id,status:"keying",by:settings.name}).then(()=>{ toast("เริ่มคีย์ให้อัตโนมัติแล้ว"); loadKey(true); }).catch(()=>{}); }
     try{ navigator.clipboard.writeText(v).then(()=>toast("คัดลอก "+v),()=>toast(v)); }catch(err){ toast(v); } return; }
 });
 $("#kList").addEventListener("click",e=>{ const b=e.target.closest(".case"); if(!b) return; S.keySel=b.dataset.id; renderKey(); });
