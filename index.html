@@ -180,7 +180,7 @@ h2{font-family:var(--f-display);font-size:19px;margin:0 0 4px;text-wrap:balance;
 .kv span:last-child{font-weight:600}
 .his{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:12px}
 .his-h{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:8px 12px;background:var(--surface2);font-weight:600;font-size:14px;border-bottom:1px solid var(--line)}
-.ln{display:grid;grid-template-columns:24px minmax(92px,auto) minmax(0,1fr) 56px 40px;gap:10px;align-items:center;padding:9px 12px;border-top:1px solid var(--line)}
+.ln{display:grid;grid-template-columns:24px minmax(110px,auto) minmax(0,1fr) 56px;gap:10px;align-items:center;padding:9px 12px;border-top:1px solid var(--line)}
 .lnck{width:20px;height:20px;margin:0;accent-color:var(--done);cursor:pointer}
 .lnck:disabled{cursor:default;opacity:.45}
 .kstart{display:flex;align-items:center;gap:14px;width:100%;margin:4px 0 14px;padding:14px 16px;border:0;border-radius:12px;background:var(--keying);color:var(--surface);text-align:left;box-shadow:0 0 0 4px var(--keying-soft)}
@@ -198,7 +198,7 @@ h2{font-family:var(--f-display);font-size:19px;margin:0 0 4px;text-wrap:balance;
 .ln.ok{background:var(--done-soft)}
 .ln.ok .ln-name,.ln.ok .ln-code{text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--done) 60%,transparent)}
 .ln input{width:20px;height:20px;accent-color:var(--done)}
-.ln-code{font-family:var(--f-mono);font-size:18px;font-weight:600;letter-spacing:.02em;white-space:nowrap}
+.ln-code{font-family:var(--f-mono);font-size:21px;font-weight:600;letter-spacing:.02em;white-space:nowrap}
 .ln-code.none{font-family:var(--f-body);font-size:13px;color:var(--bad)}
 .ln-name{min-width:0;overflow-wrap:anywhere}
 .ln-qty{font-family:var(--f-mono);font-size:20px;font-weight:600;text-align:right}
@@ -254,12 +254,11 @@ tfoot td{font-weight:700;background:var(--surface2)}
 }
 @media (max-width:520px){
   .grid3{grid-template-columns:1fr 1fr}
-  .ln{grid-template-columns:22px minmax(0,1fr) 44px 36px;row-gap:2px}
+  .ln{grid-template-columns:22px minmax(0,1fr) 48px;row-gap:2px}
   .lnck{grid-column:1;grid-row:1/3}
-  .ln-code{grid-column:2;font-size:17px}
+  .ln-code{grid-column:2;font-size:19px}
   .ln-name{grid-column:2;grid-row:2;font-size:13.5px}
   .ln-qty{grid-column:3;grid-row:1/3}
-  .ln .copy{grid-column:4;grid-row:1/3}
 }
 </style>
 </head>
@@ -393,7 +392,6 @@ tfoot td{font-weight:700;background:var(--surface2)}
 const CONFIG = {
   API_URL: "https://script.google.com/macros/s/AKfycbyYaXPCoN4N5MMrnikIxW-POe5kmD8Zm001Ms0Xt_WYOYTOIpJbeCI6-GKtj4ze1f_QDg/exec",          // ใส่ URL ของ Apps Script Web App (ลงท้าย /exec) หรือใส่ในหน้าตั้งค่าของแอป
   POLL_SECONDS: 30,     // รีเฟรชอัตโนมัติ (วินาที)
-  COPY_NO_SPACE: true,  // ปุ่ม copy รหัส: ตัดช่องว่างออก (70 110 -> 70110)
 };
 /* ชนิดการระงับความรู้สึก + การคิดค่าบริการตามเวลา (อ้างอิงรหัสในรายการ) */
 const ANES = [
@@ -422,7 +420,7 @@ const MEM = {};
 function lsGet(k,d){ try{ const v=localStorage.getItem(k); return v==null?(k in MEM?MEM[k]:d):JSON.parse(v);}catch(e){ return k in MEM?MEM[k]:d; } }
 function lsSet(k,v){ MEM[k]=v; try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
 
-let settings = Object.assign({name:"",room:"",api:CONFIG.API_URL,pin:"",tab:"send",copyNoSpace:CONFIG.COPY_NO_SPACE}, lsGet("ab_settings",{}));
+let settings = Object.assign({name:"",room:"",api:CONFIG.API_URL,pin:"",tab:"send"}, lsGet("ab_settings",{}));
 if (CONFIG.API_URL && !settings.api) settings.api = CONFIG.API_URL;
 const isLive = () => !!settings.api;
 
@@ -860,15 +858,14 @@ function renderSheet(c){
         <span class="ln-code ${it.code?"":"none"}">${it.code?esc(it.code):"ไม่มีรหัส"}</span>
         <span class="ln-name">${esc(it.name)}${DUPCODES.has(it.code)?' <span class="tag warn">รหัสใช้หลายรายการ เลือกให้ตรงชื่อ</span>':""}</span>
         <span class="ln-qty">${esc(it.qty)}</span>
-        ${it.code?`<button class="copy" type="button" data-copy="${esc(it.code)}" title="คัดลอกรหัส"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button>`:"<span></span>"}
-      </div>`).join("")+`</div>`; };
+              </div>`).join("")+`</div>`; };
   $("#kDetail").innerHTML = `<div class="card">
     <div class="row" style="justify-content:space-between;margin-bottom:6px"><button class="btn small k-close" type="button" id="kBack">← กลับ</button>${stPill(c.status)}</div>
     ${c.status==="pending"?`<button class="kstart" type="button" id="kStart"><span class="kstart-ic">▶</span><span><b>เริ่มคีย์</b><small>กดก่อนเปิด HosXP ทุกครั้ง เพื่อรับเคสนี้</small></span></button>`:""}
     ${mine?`<div class="kmine">● คุณกำลังคีย์เคสนี้</div>`:""}
     <div class="sheet-h">
       <span class="big">${esc(c.room)} · เคส ${esc(c.caseNo)}</span>
-      <div class="kv"><span>HN</span><span class="mono" style="font-size:18px">${esc(c.hn)} <button class="copy" type="button" data-copy="${esc(c.hn)}" title="คัดลอก HN" style="display:inline-grid;vertical-align:middle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button></span></div>
+      <div class="kv"><span>HN</span><span class="mono" style="font-size:20px">${esc(c.hn)}</span></div>
       <div class="kv"><span>Dr.Anes</span><span class="nm-doc">${esc(c.doctor||"—")}</span></div><div class="kv"><span>ชนิด</span><span>${esc(anesLabel(c.anesType)||"—")}</span></div>
       <div class="kv"><span>เวลา</span><span>${c.start||"—"}–${c.end||"—"} (${durTxt(c.minutes===""?null:c.minutes)})</span></div>
       <div class="kv"><span>วันที่</span><span>${thDate(c.date)}</span></div>
@@ -905,13 +902,6 @@ function renderSheet(c){
     $("#doRt").onclick=()=>{ const r=$("#rsn").value.trim(); if(!r){ $("#rsn").focus(); return;} closeModal(); go("returned",{reason:r},"ส่งกลับแล้ว"); }; };
   const bk=$("#kBack"); if(bk) bk.onclick=()=>{ S.keySel=null; $("#kDetail").classList.remove("open"); renderKey(); };
 }
-$("#kDetail").addEventListener("click",e=>{
-  const cp=e.target.closest("[data-copy]");
-  if (cp){ e.stopPropagation(); let v=cp.dataset.copy; if(settings.copyNoSpace) v=v.replace(/\s+/g,"");
-    const cc=S.keyCases.find(x=>x.id===S.keySel);
-    if (cc && cc.status==="pending" && settings.name){ api("status",{id:cc.id,status:"keying",by:settings.name}).then(()=>{ toast("เริ่มคีย์ให้อัตโนมัติแล้ว"); loadKey(true); }).catch(()=>{}); }
-    try{ navigator.clipboard.writeText(v).then(()=>toast("คัดลอก "+v),()=>toast(v)); }catch(err){ toast(v); } return; }
-});
 $("#kList").addEventListener("click",e=>{ const b=e.target.closest(".case"); if(!b) return; S.keySel=b.dataset.id; renderKey(); });
 $("#kRooms").addEventListener("click",e=>{ const b=e.target.closest(".chip"); if(!b) return; S.keyRoom=b.dataset.r; renderKey(); });
 $("#kMode").addEventListener("click",e=>{ const b=e.target.closest(".chip"); if(!b) return; S.keyMode=b.dataset.m; document.querySelectorAll("#kMode .chip").forEach(x=>x.setAttribute("aria-pressed",x===b)); loadKey(); });
@@ -998,7 +988,6 @@ function openSettings(msg, focusPin){
   <div class="stack">
     <label class="field"><span class="label">ชื่อ (แสดงเป็นผู้ส่ง / ผู้คีย์)</span><input class="input" id="stName" value="${esc(settings.name)}" placeholder="เช่น ปุ๊ วสญ."></label>
     <label class="field"><span class="label">จุดประจำ (ค่าเริ่มต้นของฟอร์ม)</span><select class="input" id="stRoom"><option value="">— ไม่ระบุ —</option>${ROOMS.map(r=>`<option ${r===settings.room?"selected":""}>${esc(r)}</option>`).join("")}</select></label>
-    <label class="row" style="gap:10px"><input type="checkbox" id="stNs" ${settings.copyNoSpace?"checked":""} style="width:18px;height:18px"> <span>ปุ่มคัดลอกรหัส ตัดช่องว่างออก (70 110 → 70110)</span></label>
     <details ${!isLive()||!settings.pin||focusPin?"open":""}><summary style="cursor:pointer;font-weight:600">การเชื่อมต่อ (ลิงก์และรหัสทีม)</summary>
       <div class="stack" style="margin-top:10px">
         <label class="field"><span class="label">ลิงก์ Apps Script Web App</span><input class="input mono" id="stApi" value="${esc(settings.api)}" placeholder="https://script.google.com/macros/s/…/exec" style="font-size:13px"></label>
@@ -1009,7 +998,7 @@ function openSettings(msg, focusPin){
   <div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn" data-close>ปิด</button><button class="btn primary" id="stSave">บันทึก</button></div>`);
   if (focusPin) setTimeout(()=>{ const el=$("#stPin"); if(el){ el.focus(); el.setAttribute("aria-invalid","true"); } },50);
   $("#stSave").onclick=async()=>{ S.pinAsked=false;
-    settings.name=$("#stName").value.trim(); settings.room=$("#stRoom").value; settings.copyNoSpace=$("#stNs").checked;
+    settings.name=$("#stName").value.trim(); settings.room=$("#stRoom").value;
     const api0=settings.api, pin0=settings.pin; settings.api=$("#stApi").value.trim(); settings.pin=$("#stPin").value;
     lsSet("ab_settings",settings); closeModal(); renderWho();
     if (settings.room && !S.draft.id && !S.draft.hn){ S.draft.room=settings.room; S.draft.caseNo=""; saveDraft(); }
