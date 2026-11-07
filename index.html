@@ -318,13 +318,13 @@ tfoot td{font-weight:700;background:var(--surface2)}
           <label class="field"><span class="label">สิ้นสุด <button class="now" type="button" data-now="fEnd">ตอนนี้</button></span><input class="input mono tm" type="text" id="fEnd" inputmode="numeric" maxlength="5" placeholder="1130" autocomplete="off"></label>
         </div>
         <div class="timebox" id="timeBox"></div>
-        <div class="field">
-          <span class="label">ชนิดการระงับความรู้สึก</span>
-          <div class="chips" id="fType"></div>
-        </div>
         <div class="grid2">
           <label class="field"><span class="label" style="text-transform:none">Dr.Anes</span><select class="input" id="fDoc"></select><span class="muted" id="docHint" style="font-size:12.5px;margin-top:4px" hidden>ยังไม่มีรายชื่อ ผู้ดูแลเพิ่มได้ในชีต Doctors</span></label>
           <label class="field"><span class="label" style="text-transform:none">Template ดมยา</span><select class="input" id="fTpl"></select></label>
+        </div>
+        <div class="field">
+          <span class="label">ชนิดการระงับความรู้สึก</span>
+          <div class="chips" id="fType"></div>
         </div>
         <label class="field"><span class="label">หมายเหตุถึงผู้คีย์ (ถ้ามี)</span><input class="input" id="fNote" placeholder="เช่น ใช้ยานอกรายการ, เคสต่อเนื่อง"></label>
       </div>
@@ -557,7 +557,7 @@ function autoItems(type, minutes, skipFixed){
 }
 function timeExplain(type, minutes){
   const a = ANES.find(x=>x.k===type);
-  if (!a) return "เลือกชนิดการระงับความรู้สึก แล้วกรอกเวลา";
+  if (!a) return "เลือก Template หรือชนิดการระงับความรู้สึก";
   if (a.k==="OTHER") return "ไม่คิดค่าบริการตามเวลา";
   if (minutes==null) return "กรอกเวลาเริ่ม–สิ้นสุด แล้วระบบคิดค่าบริการตามเวลาให้";
   if (a.first){ const ex=minutes-60; return ex>0 ? `ชม.แรก 1 + ถัดไป <b>${Math.ceil(ex/15)}</b> × 15 นาที` : "ชม.แรก 1"; }
