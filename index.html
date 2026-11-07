@@ -134,6 +134,7 @@ h2{font-family:var(--f-display);font-size:19px;margin:0 0 4px;text-wrap:balance;
 .it-name{font-weight:500;overflow-wrap:anywhere}
 .it-meta{font-size:12.5px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .tag{font-size:11px;font-weight:600;border-radius:5px;padding:1px 6px;background:var(--mute-soft);color:var(--muted)}
+.tag.tpl{background:color-mix(in srgb,var(--g1) 14%,var(--surface));color:var(--g1)}
 .tag.auto{background:var(--accent-soft);color:var(--accent)}
 .tag.warn{background:var(--bad-soft);color:var(--bad)}
 .step{display:flex;align-items:center;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--surface)}
@@ -299,16 +300,19 @@ tfoot td{font-weight:700;background:var(--surface2)}
           <label class="field"><span class="label">HN</span><input class="input mono" id="fHN" inputmode="numeric" autocomplete="off" placeholder="เลข HN"></label>
           <label class="field"><span class="label">เคสที่</span><input class="input mono" id="fCase" type="number" min="1" inputmode="numeric"></label>
         </div>
-        <label class="field"><span class="label" style="text-transform:none">Dr.Anes</span><select class="input" id="fDoc"></select><span class="muted" id="docHint" style="font-size:12.5px;margin-top:4px" hidden>ยังไม่มีรายชื่อ ผู้ดูแลเพิ่มได้ในชีต Doctors</span></label>
-        <div class="field">
-          <span class="label">ชนิดการระงับความรู้สึก</span>
-          <div class="chips" id="fType"></div>
-        </div>
         <div class="grid2" id="timeRow">
           <label class="field"><span class="label">เริ่มดมยา <button class="now" type="button" data-now="fStart">ตอนนี้</button></span><input class="input mono tm" type="text" id="fStart" inputmode="numeric" maxlength="5" placeholder="0900" autocomplete="off"></label>
           <label class="field"><span class="label">สิ้นสุด <button class="now" type="button" data-now="fEnd">ตอนนี้</button></span><input class="input mono tm" type="text" id="fEnd" inputmode="numeric" maxlength="5" placeholder="1130" autocomplete="off"></label>
         </div>
         <div class="timebox" id="timeBox"></div>
+        <div class="field">
+          <span class="label">ชนิดการระงับความรู้สึก</span>
+          <div class="chips" id="fType"></div>
+        </div>
+        <div class="grid2">
+          <label class="field"><span class="label" style="text-transform:none">Dr.Anes</span><select class="input" id="fDoc"></select><span class="muted" id="docHint" style="font-size:12.5px;margin-top:4px" hidden>ยังไม่มีรายชื่อ ผู้ดูแลเพิ่มได้ในชีต Doctors</span></label>
+          <label class="field"><span class="label" style="text-transform:none">Template ดมยา</span><select class="input" id="fTpl"></select></label>
+        </div>
         <label class="field"><span class="label">หมายเหตุถึงผู้คีย์ (ถ้ามี)</span><input class="input" id="fNote" placeholder="เช่น ใช้ยานอกรายการ, เคสต่อเนื่อง"></label>
       </div>
 
@@ -400,6 +404,15 @@ const ANES = [
   {k:"MAC",  label:"LA with MAC", once:"70 140"},
   {k:"COLONO",label:"Colono OPD", perHour:"70 120", extra:{"70 340":1,"52 013":1,"55 820":1,"1000 017":1,"1000 248":1,"1000 194":1,"1000 341":1,"412 6420":1,"9991":1,"8606":1}},
   {k:"OTHER",label:"อื่นๆ (ไม่คิดตามเวลา)"},
+];
+/* Template ดมยา: ตั้งชนิด + ใส่ยา/อุปกรณ์ตามแบบฟอร์ม ส่วนค่าหัตถการตามเวลา (ชม.แรก/ถัดไป, TIVA, Volatile) ระบบคิดจากเวลาที่กรอก */
+const TEMPLATES = [
+  {k:"T_TIVA", label:"TIVA", type:"TIVA", items:{"70 340":1,"52 013":1,"1000 194":1,"1000 248":1,"1001 693":1,"1000 341":1,"412 6420":1}},
+  {k:"T_SB",   label:"Spinal block", type:"RA", items:{"52 013":1,"1000 056":1,"1000 216":1,"1000 771":1,"1000 017":1,"1000 341":1,"412 6420":1}},
+  {k:"T_GA",   label:"GA adult", type:"GAC", items:{"70 301":1,"70 310":1,"52 013":1,"1000 194":1,"1001 700":2,"1001 681":1,"1000 248":1,"1600 344":2,"1000 056":1,"1001 697":1,"1001 054":1,"1600 383":1,"1000 017":1,"1000 341":1,"412 6400":1,"412 6420":1}},
+  {k:"T_CSB",  label:"Cesarean SB", type:"RA", items:{"52 013":1,"1000 056":1,"1000 216":1,"1001 054":1,"1000 477":4,"1000 771":1,"1000 017":2,"1000 341":1,"412 6420":1}},
+  {k:"T_CGA",  label:"Cesarean GA", type:"GAC", items:{"70 301":1,"70 310":1,"52 013":1,"1000 194":1,"1001 700":2,"1001 681":1,"1000 417":1,"1000 056":2,"1001 697":1,"1001 693":1,"1001 054":1,"1000 477":4,"1600 383":1,"1000 017":2,"1000 341":1,"412 6390":2,"412 6420":1}},
+  {k:"T_OH",   label:"Open Heart", type:"GAC", items:{"70 301":1,"70 340":5,"70 310":1,"71 411":1,"71 420":1,"51 422":1,"52 013":1,"55 510":1,"55 820":1,"43 001":1,"1000 194":2,"1001 025":3,"1000 248":5,"1600 344":2,"1000 056":1,"1001 697":1,"1600 801":1,"1000 216":1,"1000 110":1,"1001 693":1,"1600 383":1,"1001 690":5,"1000 341":3,"1000 320":2,"1000 319":2,"1000 340":3,"412 6410":1,"412 6770":1,"401 2040":2}},
 ];
 /* สีชิปชนิดการระงับความรู้สึก (เลขสีเดียวกับหมวดรายการ 0–7) */
 const TYPE_COLOR = {GA:0, GAC:7, TIVA:5, RA:2, MAC:4, COLONO:1, OTHER:3};
@@ -517,11 +530,11 @@ function demoSeed(){
 }
 
 /* ---------- auto charge by time ---------- */
-function autoItems(type, minutes){
+function autoItems(type, minutes, skipFixed){
   const a = ANES.find(x=>x.k===type); if(!a) return [];
   const out=[], add=(code,qty)=>{ const it=BYCODE[code]; if(it && qty>0) out.push({id:it.id,code:it.code,name:it.name,sec:it.sec,qty}); };
   const timed = minutes!=null && minutes>0;
-  if (a.extra) Object.entries(a.extra).forEach(([c,v])=>{ if(v!=="hour") add(c,v); });   // รายการคงที่ (CO2, Warmer) ใส่ทันทีที่เลือกชนิด
+  if (a.extra && !skipFixed) Object.entries(a.extra).forEach(([c,v])=>{ if(v!=="hour") add(c,v); });   // รายการคงที่ (CO2, Warmer) ใส่ทันทีที่เลือกชนิด
   if (!timed) return out;
   if (a.first){ add(a.first,1); const ex=minutes-60; if(ex>0) add(a.next, Math.ceil(ex/15)); }
   if (a.perHour) add(a.perHour, Math.max(1,Math.ceil(minutes/60)));
@@ -547,7 +560,7 @@ const S = {
   checks: lsGet("ab_checks",{}), usage: lsGet("ab_usage",{}),
 };
 function newDraft(){
-  return {id:"", date:today(), room:settings.room||ROOMS[0], caseNo:"", hn:"", anesType:"", start:"", end:"", note:"", doctor:"", qty:{}, autoIds:[], manual:{}, parentId:""};
+  return {id:"", date:today(), room:settings.room||ROOMS[0], caseNo:"", hn:"", anesType:"", start:"", end:"", note:"", doctor:"", tpl:"", tplIds:[], qty:{}, autoIds:[], manual:{}, parentId:""};
 }
 S.draft = Object.assign(newDraft(), lsGet("ab_draft", {}));
 
@@ -571,15 +584,29 @@ function fillRoomSelect(sel, val){ sel.innerHTML = ROOMS.map(r=>`<option ${r===v
 function saveDraft(){ lsSet("ab_draft", S.draft); }
 function recomputeAuto(){
   const d=S.draft, m=minutesBetween(d.start,d.end);
-  const auto=autoItems(d.anesType,m);
+  const auto=autoItems(d.anesType,m,!!d.tpl);
   d.autoIds.forEach(id=>{ if(!d.manual[id]) delete d.qty[id]; });
   d.autoIds = auto.map(a=>a.id);
   auto.forEach(a=>{ if(!d.manual[a.id]) d.qty[a.id]=a.qty; });
 }
+function fillTplSelect(val){
+  $("#fTpl").innerHTML = `<option value="">— ไม่ใช้ Template —</option>` + TEMPLATES.map(t=>`<option value="${t.k}" ${t.k===val?"selected":""}>${esc(t.label)}</option>`).join("");
+}
+function applyTemplate(key){
+  const d=S.draft; d.tplIds=d.tplIds||[];
+  d.tplIds.forEach(id=>{ if(!d.manual[id]) delete d.qty[id]; });
+  d.tplIds=[]; d.tpl=key;
+  const t=TEMPLATES.find(x=>x.k===key);
+  if (t){ d.anesType=t.type; $("#fType").classList.remove("need"); }
+  recomputeAuto();
+  if (t) Object.entries(t.items).forEach(([c,q])=>{ const it=BYCODE[c]; if(it){ d.qty[it.id]=q; d.tplIds.push(it.id); delete d.manual[it.id]; } });
+  saveDraft(); S.grp="เลือกแล้ว"; renderHead(); renderItems();
+  if (t) toast(`ใช้ Template ${t.label} แล้ว ค่าหัตถการคิดตามเวลาที่กรอก`);
+}
 function renderHead(){
   const d=S.draft;
   $("#fDate").value=d.date; fillRoomSelect($("#fRoom"), d.room);
-  $("#fHN").value=d.hn; fillDocSelect(d.doctor||""); $("#fCase").value=d.caseNo; $("#fStart").value=d.start; $("#fEnd").value=d.end; $("#fNote").value=d.note;
+  $("#fHN").value=d.hn; fillDocSelect(d.doctor||""); fillTplSelect(d.tpl||""); $("#fCase").value=d.caseNo; $("#fStart").value=d.start; $("#fEnd").value=d.end; $("#fNote").value=d.note;
   $("#fType").innerHTML = ANES.map(a=>`<button type="button" class="chip gc gc${TYPE_COLOR[a.k]??1}" data-k="${a.k}" aria-pressed="${d.anesType===a.k}">${esc(a.label)}</button>`).join("");
   $("#formTitle").textContent = d.id ? "แก้ไขเคส" : (d.parentId ? "ส่งรายการเพิ่ม" : "ส่งรายการค่าบริการ");
   const editing = !!(d.id || d.parentId); $("#closeEdit").hidden = !editing; $("#clearBtn").hidden = editing;
@@ -607,7 +634,7 @@ function itemRow(i){
   const d=S.draft, q=d.qty[i.id]||0, auto=d.autoIds.includes(i.id)&&!d.manual[i.id];
   return `<div class="it ${q?"on":""}" data-id="${i.id}">
     <div style="min-width:0"><div class="it-name">${esc(i.name)}</div>
-    <div class="it-meta"><span class="mono">${i.code?esc(i.code):""}</span>${!i.code?'<span class="tag warn">ไม่มีรหัส</span>':""}${i.unit?`<span>${esc(i.unit)}</span>`:""}${auto?'<span class="tag auto">อัตโนมัติ</span>':""}</div></div>
+    <div class="it-meta"><span class="mono">${i.code?esc(i.code):""}</span>${!i.code?'<span class="tag warn">ไม่มีรหัส</span>':""}${i.unit?`<span>${esc(i.unit)}</span>`:""}${auto?'<span class="tag auto">อัตโนมัติ</span>':""}${(d.tplIds||[]).includes(i.id)&&!d.manual[i.id]?'<span class="tag tpl">Template</span>':""}</div></div>
     <div class="step"><button type="button" data-d="-1" aria-label="ลด">−</button><input type="number" min="0" inputmode="numeric" value="${q||""}" placeholder="0" aria-label="จำนวน ${esc(i.name)}"><button type="button" data-d="1" aria-label="เพิ่ม">+</button></div>
   </div>`;
 }
@@ -640,7 +667,7 @@ async function suggestCaseNo(){
 }
 function setQty(id, q){
   const d=S.draft; q=Math.max(0, Math.min(999, Math.round(+q||0)));
-  if (d.autoIds.includes(id)) d.manual[id]=true;
+  if (d.autoIds.includes(id) || (d.tplIds||[]).includes(id)) d.manual[id]=true;
   if (q) d.qty[id]=q; else delete d.qty[id];
   saveDraft();
 }
@@ -656,7 +683,8 @@ $("#itemList").addEventListener("change",e=>{
 });
 $("#grps").addEventListener("click",e=>{ const b=e.target.closest(".chip"); if(!b) return; S.grp=b.dataset.g; S.q=""; $("#q").value=""; renderItems(); });
 $("#q").addEventListener("input",e=>{ S.q=e.target.value; renderItems(); });
-$("#fType").addEventListener("click",e=>{ const b=e.target.closest(".chip"); if(!b) return; $("#fType").classList.remove("need"); S.draft.anesType = S.draft.anesType===b.dataset.k ? "" : b.dataset.k; recomputeAuto(); saveDraft(); renderHead(); renderItems(); });
+$("#fTpl").addEventListener("change",e=>applyTemplate(e.target.value));
+$("#fType").addEventListener("click",e=>{ const b=e.target.closest(".chip"); if(!b) return; $("#fType").classList.remove("need"); if(S.draft.tpl){ S.draft.tpl=""; } S.draft.anesType = S.draft.anesType===b.dataset.k ? "" : b.dataset.k; recomputeAuto(); saveDraft(); renderHead(); renderItems(); });
 [["#fDate","date"],["#fRoom","room"],["#fHN","hn"],["#fCase","caseNo"],["#fDoc","doctor"],["#fNote","note"]].forEach(([sel,k])=>{
   $(sel).addEventListener(sel==="#fHN"||sel==="#fNote"?"input":"change", e=>{
     S.draft[k]=e.target.value.trim? e.target.value.trim() : e.target.value;
@@ -679,7 +707,7 @@ function normTime(v){
 function commitTime(el, k){
   const t=normTime(el.value);
   if (t===null){ el.setAttribute("aria-invalid","true"); toast("เวลาไม่ถูกต้อง พิมพ์ 4 หลัก เช่น 0900 หรือ 1345"); return false; }
-  el.removeAttribute("aria-invalid"); el.value=t;
+  el.removeAttribute("aria-invalid"); el.value=t; if(t) el.classList.remove("need");
   if (S.draft[k]!==t){ S.draft[k]=t; recomputeAuto(); saveDraft(); renderTime(); renderItems(); }
   return true;
 }
@@ -719,7 +747,7 @@ function validate(){
   }
   if (!d.parentId){
     if (!d.anesType) errs.push("ยังไม่ได้เลือกชนิดการระงับความรู้สึก (ต้องเลือกทุกเคส ถ้าไม่เข้าชนิดใดให้เลือก \"อื่นๆ\")");
-    if (timed && (!d.start||!d.end)) errs.push("ยังไม่ได้กรอกเวลาเริ่ม/สิ้นสุด จึงคิดค่าบริการตามเวลาไม่ได้");
+    if (!d.start||!d.end) errs.push("ยังไม่ได้กรอกเวลาเริ่ม/สิ้นสุด (ต้องกรอกทุกเคส)");
     if (m!=null && m>12*60) warns.push(`<b>ระยะเวลา ${durTxt(m)}</b> ตรวจสอบเวลาอีกครั้ง`);
     if ((d.anesType==="GA"||d.anesType==="GAC") && !its.some(i=>AIRWAY_GRPS.includes((BYID[i.id]||{}).grp)))
       warns.push("<b>GA แต่ยังไม่มีท่อช่วยหายใจ</b> ถ้าใช้ LMA หรือไม่ได้ใส่ท่อ ส่งต่อได้เลย");
@@ -743,8 +771,15 @@ $("#reviewBtn").addEventListener("click", async ()=>{
   const {errs,warns,its,m}=validate(), d=S.draft;
   $("#fDoc").classList.toggle("need", !d.doctor);
   const noType = !d.parentId && !d.anesType;
+  const noStart = !d.parentId && !d.start, noEnd = !d.parentId && !d.end;
   $("#fType").classList.toggle("need", noType);
-  if (noType){ $("#fType").scrollIntoView({behavior:"smooth",block:"center"}); toast("กรุณาเลือกชนิดการระงับความรู้สึกก่อนส่ง"); return; }
+  $("#fStart").classList.toggle("need", noStart); $("#fEnd").classList.toggle("need", noEnd);
+  if (noType || noStart || noEnd){
+    const first = (noStart||noEnd) ? $(noStart?"#fStart":"#fEnd") : $("#fType");
+    first.scrollIntoView({behavior:"smooth",block:"center"});
+    toast("กรุณา" + [(noStart||noEnd)?"กรอกเวลาเริ่ม/สิ้นสุด":"", noType?"เลือกชนิดการระงับความรู้สึก":""].filter(Boolean).join(" และ ") + "ก่อนส่ง");
+    return;
+  }
   openModal(`<h3>${d.id?"ตรวจก่อนบันทึกการแก้ไข":"ตรวจก่อนส่ง"}</h3>
     <div class="sheet-h"><div class="kv"><span>จุด</span><span>${esc(d.room)} · เคส ${esc(d.caseNo)}</span></div>
     <div class="kv"><span>HN</span><span class="mono">${esc(d.hn||"—")}</span></div>
