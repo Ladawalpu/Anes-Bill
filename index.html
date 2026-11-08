@@ -417,12 +417,14 @@ const ANES = [
   {k:"TIVA", label:"TIVA",       perHour:"70 120", extra:{"52 013":1}},
   {k:"RA",   label:"RA",         first:"70 130", next:"70 131", extra:{"52 013":1}},
   {k:"MAC",  label:"LA with MAC", once:"70 140"},
-  {k:"COLONO",label:"Colono OPD", perHour:"70 120", extra:{"70 340":1,"52 013":1,"55 820":1,"1000 017":1,"1000 248":1,"1000 194":1,"1000 341":1,"412 6420":1,"9991":1,"8606":1}},
+  {k:"COLONO",label:"Colono OPD", hidden:true, perHour:"70 120", extra:{"70 340":1,"52 013":1,"55 820":1,"1000 017":1,"1000 248":1,"1000 194":1,"1000 341":1,"412 6420":1,"9991":1,"8606":1}},
   {k:"OTHER",label:"อื่นๆ (ไม่คิดตามเวลา)"},
 ];
 /* Template ดมยา: ตั้งชนิด + ใส่ยา/อุปกรณ์ตามแบบฟอร์ม ส่วนค่าหัตถการตามเวลา (ชม.แรก/ถัดไป, TIVA, Volatile) ระบบคิดจากเวลาที่กรอก */
 const TEMPLATES = [
+  {k:"T_COLONO", label:"Colono OPD", type:"COLONO", items:{"70 340":1,"52 013":1,"55 820":1,"1000 017":1,"1000 248":1,"1000 194":1,"1000 341":1,"412 6420":1,"9991":1,"8606":1}},
   {k:"T_TIVA", label:"TIVA", type:"TIVA", items:{"70 340":1,"52 013":1,"1000 194":1,"1000 248":1,"1001 693":1,"1000 341":1,"412 6420":1}},
+  {k:"T_GAM",  label:"GA mask", type:"GA", items:{"70 301":1,"70 310":1,"52 013":1,"1000 194":1,"1000 248":1,"1001 693":1,"1000 341":1,"1000 319":1,"412 6420":1}},
   {k:"T_SB",   label:"Spinal block", type:"RA", items:{"52 013":1,"1000 056":1,"1000 216":1,"1000 771":1,"1000 017":1,"1000 341":1,"412 6420":1}},
   {k:"T_GA",   label:"GA adult", type:"GAC", items:{"70 301":1,"70 310":1,"52 013":1,"1000 194":1,"1001 700":2,"1001 681":1,"1000 248":1,"1600 344":2,"1000 056":1,"1001 697":1,"1001 054":1,"1600 383":1,"1000 017":1,"1000 341":1,"412 6400":1,"412 6420":1}},
   {k:"T_CSB",  label:"Cesarean SB", type:"RA", items:{"52 013":1,"1000 056":1,"1000 216":1,"1001 054":1,"1000 477":4,"1000 771":1,"1000 017":2,"1000 341":1,"412 6420":1}},
@@ -622,7 +624,7 @@ function renderHead(){
   const d=S.draft;
   $("#fDate").value=d.date; fillRoomSelect($("#fRoom"), d.room);
   $("#fHN").value=d.hn; fillDocSelect(d.doctor||""); fillTplSelect(d.tpl||""); $("#fCase").value=d.caseNo; $("#fStart").value=d.start; $("#fEnd").value=d.end; $("#fNote").value=d.note;
-  $("#fType").innerHTML = ANES.map(a=>`<button type="button" class="chip gc gc${TYPE_COLOR[a.k]??1}" data-k="${a.k}" aria-pressed="${d.anesType===a.k}">${esc(a.label)}</button>`).join("");
+  $("#fType").innerHTML = ANES.filter(a=>!a.hidden || d.anesType===a.k).map(a=>`<button type="button" class="chip gc gc${TYPE_COLOR[a.k]??1}" data-k="${a.k}" aria-pressed="${d.anesType===a.k}">${esc(a.label)}</button>`).join("");
   $("#formTitle").textContent = d.id ? "แก้ไขเคส" : (d.parentId ? "ส่งรายการเพิ่ม" : "ส่งรายการค่าบริการ");
   const editing = !!(d.id || d.parentId); $("#closeEdit").hidden = !editing; $("#clearBtn").hidden = editing;
   const en=$("#editNote");
