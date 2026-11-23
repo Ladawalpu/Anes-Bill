@@ -581,7 +581,7 @@ function newDraft(){
   return {id:"", date:today(), room:settings.room||ROOMS[0], caseNo:"", hn:"", anesType:"", start:"", end:"", note:"", doctor:"", tpl:"", tplIds:[], qty:{}, autoIds:[], manual:{}, parentId:""};
 }
 S.draft = Object.assign(newDraft(), lsGet("ab_draft", {}));
-if (!S.draft.id) S.draft.date = today();   /* เปิดแอป: วันที่ = วันนี้เสมอ (ยกเว้นกำลังแก้ไขเคสเดิม) */
+if (!S.draft.id){ S.draft.date = today(); if (!S.draft.parentId) S.draft.doctor = ""; }   /* เปิดแอป: วันที่ = วันนี้ และ Dr.Anes เริ่มที่ "เลือก Dr.Anes" (ยกเว้นกำลังแก้ไขเคสเดิม/ส่งรายการเพิ่ม) */
 
 /* ---------- tabs ---------- */
 function setTab(t){
