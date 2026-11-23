@@ -581,6 +581,7 @@ function newDraft(){
   return {id:"", date:today(), room:settings.room||ROOMS[0], caseNo:"", hn:"", anesType:"", start:"", end:"", note:"", doctor:"", tpl:"", tplIds:[], qty:{}, autoIds:[], manual:{}, parentId:""};
 }
 S.draft = Object.assign(newDraft(), lsGet("ab_draft", {}));
+if (!S.draft.id) S.draft.date = today();   /* เปิดแอป: วันที่ = วันนี้เสมอ (ยกเว้นกำลังแก้ไขเคสเดิม) */
 
 /* ---------- tabs ---------- */
 function setTab(t){
@@ -757,7 +758,7 @@ function validate(){
   if (!d.hn) errs.push("ยังไม่ได้กรอก HN");
   if (!d.caseNo) errs.push("ยังไม่ได้ระบุลำดับเคส");
   if (!its.length) errs.push("ยังไม่ได้เลือกรายการ");
-  if (!d.doctor) warns.push("<b>ยังไม่ได้เลือก Dr.Anes</b> กลับไปเลือกชื่อวิสัญญีแพทย์ หรือกดยืนยันถ้าไม่มี Dr.Anes ในเคสนี้");
+  if (!d.doctor) errs.push("ยังไม่ได้เลือก Dr.Anes");
   if (d.anesType==="COLONO"){
     warns.push("<b>Colono OPD:</b> ผู้ป่วยสิทธิข้าราชการ เปลี่ยน Acetar (1000 017) เป็น NSS 1000 ml (1000 319)");
     if (!its.some(i=>i.code==="32 203")) warns.push("<b>Colono OPD:</b> ผู้ป่วยเป็น DM เพิ่ม DTX (32 203) ในหมวด \"บริการอื่น\"");
@@ -788,14 +789,14 @@ $("#reviewBtn").addEventListener("click", async ()=>{
   const {errs,warns,its,m}=validate(), d=S.draft;
   $("#fDoc").classList.toggle("need", !d.doctor);
   const noType = !d.parentId && !d.anesType;
-  const noStart = !d.parentId && !d.start, noEnd = !d.parentId && !d.end, noCase = !d.caseNo;
+  const noStart = !d.parentId && !d.start, noEnd = !d.parentId && !d.end, noCase = !d.caseNo, noDoc = !d.doctor;
   $("#fCase").classList.toggle("need", noCase);
   $("#fType").classList.toggle("need", noType);
   $("#fStart").classList.toggle("need", noStart); $("#fEnd").classList.toggle("need", noEnd);
-  if (noCase || noType || noStart || noEnd){
-    const first = noCase ? $("#fCase") : (noStart||noEnd) ? $(noStart?"#fStart":"#fEnd") : $("#fType");
+  if (noCase || noType || noStart || noEnd || noDoc){
+    const first = noCase ? $("#fCase") : (noStart||noEnd) ? $(noStart?"#fStart":"#fEnd") : noDoc ? $("#fDoc").parentNode : $("#fType");
     first.scrollIntoView({behavior:"smooth",block:"center"});
-    toast("กรุณา" + [noCase?"ใส่เลขเคสที่":"", (noStart||noEnd)?"กรอกเวลาเริ่ม/สิ้นสุด":"", noType?"เลือกชนิดการระงับความรู้สึก":""].filter(Boolean).join(" และ ") + "ก่อนส่ง");
+    toast("กรุณา" + [noCase?"ใส่เลขเคสที่":"", (noStart||noEnd)?"กรอกเวลาเริ่ม/สิ้นสุด":"", noDoc?"เลือก Dr.Anes":"", noType?"เลือกชนิดการระงับความรู้สึก":""].filter(Boolean).join(" และ ") + " ก่อนส่ง");
     return;
   }
   openModal(`<h3>${d.id?"ตรวจก่อนบันทึกการแก้ไข":"ตรวจก่อนส่ง"}</h3>
@@ -1114,6 +1115,12 @@ setInterval(()=>{ if(document.visibilityState!=="visible" || !$("#ov").hidden) r
   renderWho();
   await loadConfig();
   if (!ROOMS.includes(S.draft.room)) S.draft.room=settings.room||ROOMS[0];
+  /* กลับมาเปิดแอปที่ค้างไว้ข้ามวัน: เลื่อนวันที่ทุกช่องเป็นวันนี้ */
+  let lastDay = today();
+  document.addEventListener("visibilitychange",()=>{ if(document.visibilityState!=="visible") return; const t=today(); if(t===lastDay) return; lastDay=t;
+    if(!S.draft.id){ S.draft.date=t; saveDraft(); }
+    ["#rDate","#kDate","#sDate"].forEach(q=>{ const el=$(q); if(el) el.value=t; });
+    setTab(S.tab); });
   setTab(S.tab); refreshBadge();
   if (isLive() && !settings.name) openSettings("ยินดีต้อนรับ ใส่ชื่อ จุดประจำ และรหัสทีม (APP PIN) ก่อนเริ่มใช้งาน");
 })();
