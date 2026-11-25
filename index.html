@@ -63,7 +63,7 @@ button{cursor:pointer}
 .who-chip.unset{background:var(--pending-soft);color:var(--pending);border-color:color-mix(in srgb,var(--pending) 45%,var(--line))}
 .who-chip.unset .av{background:var(--pending)}
 .nm{font-weight:600}
-.nm-send{color:var(--accent-deep)} .nm-doc{color:var(--g1);font-weight:600}
+.nm-send{color:var(--accent-deep)} .nm-pt{font-weight:700;color:var(--ink)} .nm-doc{color:var(--g1);font-weight:600}
 .nm-keying{color:var(--keying)} .nm-done{color:var(--done)} .nm-other{color:var(--g3)}
 .tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
@@ -85,6 +85,7 @@ h2{font-family:var(--f-display);font-size:19px;margin:0 0 4px;text-wrap:balance;
 .input:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px var(--accent-soft)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.idrow{display:grid;grid-template-columns:68px minmax(0,1fr) minmax(0,1.1fr);gap:10px}
 .stack{display:flex;flex-direction:column;gap:14px}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .btn{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:9px 14px;min-height:42px;font-weight:500}
@@ -136,8 +137,9 @@ h2{font-family:var(--f-display);font-size:19px;margin:0 0 4px;text-wrap:balance;
 
 /* sender */
 .send-grid{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:16px;align-items:start}
-.timebox{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;background:var(--surface2);border:1px dashed var(--line);border-radius:9px;padding:8px 12px;font-size:14px}
-.timebox b{font-family:var(--f-mono);font-size:16px}
+.timebox{display:flex;flex-wrap:nowrap;white-space:nowrap;align-items:center;justify-content:space-between;gap:8px;background:var(--surface2);border:1px dashed var(--line);border-radius:9px;padding:8px 12px;font-size:14px}
+.timebox>b{font-size:15px;flex:none}
+.timebox>span{min-width:0;overflow:hidden;text-overflow:ellipsis}
 .now{font-size:12px;border:0;background:none;color:var(--accent);font-weight:600;padding:0 2px;margin-left:6px}
 .picker{display:flex;flex-direction:column;gap:12px;min-width:0}
 .search{position:relative}
@@ -312,9 +314,10 @@ tfoot td{font-weight:700;background:var(--surface2)}
           <label class="field"><span class="label">วันที่</span><input class="input" type="date" id="fDate"></label>
           <label class="field"><span class="label">จุดบริการ</span><select class="input" id="fRoom"></select></label>
         </div>
-        <div class="grid2">
-          <label class="field"><span class="label">HN</span><input class="input mono" id="fHN" inputmode="numeric" autocomplete="off" placeholder="เลข HN"></label>
+        <div class="idrow">
           <label class="field"><span class="label">เคสที่</span><input class="input mono" id="fCase" type="number" min="1" inputmode="numeric" placeholder="New"></label>
+          <label class="field"><span class="label">ชื่อผู้ป่วย</span><input class="input" id="fPName" autocomplete="off" placeholder="เฉพาะชื่อ"></label>
+          <label class="field"><span class="label">HN</span><input class="input mono" id="fHN" inputmode="numeric" autocomplete="off" placeholder="เลข HN"></label>
         </div>
         <div class="grid2" id="timeRow">
           <label class="field"><span class="label">เริ่มดมยา <button class="now" type="button" data-now="fStart">ตอนนี้</button></span><input class="input mono tm" type="text" id="fStart" inputmode="numeric" maxlength="5" placeholder="0000" autocomplete="off"></label>
@@ -562,10 +565,10 @@ function autoItems(type, minutes, skipFixed){
 }
 function timeExplain(type, minutes){
   const a = ANES.find(x=>x.k===type);
-  if (!a) return "เลือก Template หรือชนิดการระงับความรู้สึก";
+  if (!a) return "เลือกชนิด/Template";
   if (a.k==="OTHER") return "ไม่คิดค่าบริการตามเวลา";
-  if (minutes==null) return "กรอกเวลาเริ่ม–สิ้นสุด แล้วระบบคิดค่าบริการตามเวลาให้";
-  if (a.first){ const ex=minutes-60; return ex>0 ? `ชม.แรก 1 + ถัดไป <b>${Math.ceil(ex/15)}</b> × 15 นาที` : "ชม.แรก 1"; }
+  if (minutes==null) return "กรอกเวลา ระบบคิดค่าบริการให้";
+  if (a.first){ const ex=minutes-60; return ex>0 ? `ชม.แรก + ถัดไป <b>${Math.ceil(ex/15)}</b>×15 น.` : "ชม.แรก 1"; }
   if (a.perHour) return `TIVA <b>${Math.max(1,Math.ceil(minutes/60))}</b> ชม.`;
   return "คิด 1 ครั้ง";
 }
@@ -578,7 +581,7 @@ const S = {
   checks: lsGet("ab_checks",{}), usage: lsGet("ab_usage",{}),
 };
 function newDraft(){
-  return {id:"", date:today(), room:settings.room||ROOMS[0], caseNo:"", hn:"", anesType:"", start:"", end:"", note:"", doctor:"", tpl:"", tplIds:[], qty:{}, autoIds:[], manual:{}, parentId:""};
+  return {id:"", date:today(), room:settings.room||ROOMS[0], caseNo:"", hn:"", pname:"", anesType:"", start:"", end:"", note:"", doctor:"", tpl:"", tplIds:[], qty:{}, autoIds:[], manual:{}, parentId:""};
 }
 S.draft = Object.assign(newDraft(), lsGet("ab_draft", {}));
 if (!S.draft.id){ S.draft.date = today(); if (!S.draft.parentId) S.draft.doctor = ""; }   /* เปิดแอป: วันที่ = วันนี้ และ Dr.Anes เริ่มที่ "เลือก Dr.Anes" (ยกเว้นกำลังแก้ไขเคสเดิม/ส่งรายการเพิ่ม) */
@@ -625,7 +628,7 @@ function applyTemplate(key){
 function renderHead(){
   const d=S.draft;
   $("#fDate").value=d.date; fillRoomSelect($("#fRoom"), d.room);
-  $("#fHN").value=d.hn; fillDocSelect(d.doctor||""); fillTplSelect(d.tpl||""); $("#fCase").value=d.caseNo; $("#fStart").value=d.start; $("#fEnd").value=d.end; $("#fNote").value=d.note;
+  $("#fHN").value=d.hn; $("#fPName").value=d.pname||""; fillDocSelect(d.doctor||""); fillTplSelect(d.tpl||""); $("#fCase").value=d.caseNo; $("#fStart").value=d.start; $("#fEnd").value=d.end; $("#fNote").value=d.note;
   $("#fType").innerHTML = ANES.filter(a=>!a.hidden || d.anesType===a.k).map(a=>`<button type="button" class="chip gc gc${TYPE_COLOR[a.k]??1}" data-k="${a.k}" aria-pressed="${d.anesType===a.k}">${esc(a.label)}</button>`).join("");
   $("#formTitle").textContent = d.id ? "แก้ไขเคส" : (d.parentId ? "ส่งรายการเพิ่ม" : "ส่งรายการค่าบริการ");
   const editing = !!(d.id || d.parentId); $("#closeEdit").hidden = !editing; $("#clearBtn").hidden = editing;
@@ -638,7 +641,7 @@ function renderHead(){
 function renderTime(){
   const d=S.draft, m=minutesBetween(d.start,d.end);
   const timed = d.anesType && d.anesType!=="OTHER";
-  $("#timeBox").innerHTML = `<span>${timeExplain(d.anesType,m)}</span><b>${durTxt(m)}</b>`;
+  $("#timeBox").innerHTML = `<span>${timeExplain(d.anesType,m)}</span>${m==null?"":`<b>${durTxt(m).replace("นาที","น.")}</b>`}`;
   $("#timeRow").style.opacity = timed||!d.anesType ? 1 : .6;
 }
 function allGroups(){ const g=[]; ITEMS.forEach(i=>{ if(!g.includes(i.grp)) g.push(i.grp); }); return ["เลือกแล้ว","ใช้บ่อย",...g]; }
@@ -671,7 +674,7 @@ function renderItems(){
 }
 function renderActionBar(){
   const d=S.draft, ids=Object.keys(d.qty), n=ids.length;
-  $("#abSum").innerHTML = `<b>${n}</b> รายการ · ${esc(d.room)}${d.hn?` · HN <span class="mono">${esc(d.hn)}</span>`:""}`;
+  $("#abSum").innerHTML = `<b>${n}</b> รายการ · ${esc(d.room)}${d.pname?` · ${esc(d.pname)}`:""}${d.hn?` · HN <span class="mono">${esc(d.hn)}</span>`:""}`;
   $("#reviewBtn").textContent = d.id ? "ตรวจและบันทึกการแก้ไข" : "ตรวจและส่ง";
 }
 function renderSend(){ renderHead(); renderItems(); suggestCaseNo(); }
@@ -702,8 +705,8 @@ $("#grps").addEventListener("click",e=>{ const b=e.target.closest(".chip"); if(!
 $("#q").addEventListener("input",e=>{ S.q=e.target.value; renderItems(); });
 $("#fTpl").addEventListener("change",e=>applyTemplate(e.target.value));
 $("#fType").addEventListener("click",e=>{ const b=e.target.closest(".chip"); if(!b) return; $("#fType").classList.remove("need"); if(S.draft.tpl){ S.draft.tpl=""; } S.draft.anesType = S.draft.anesType===b.dataset.k ? "" : b.dataset.k; recomputeAuto(); saveDraft(); renderHead(); renderItems(); });
-[["#fDate","date"],["#fRoom","room"],["#fHN","hn"],["#fCase","caseNo"],["#fDoc","doctor"],["#fNote","note"]].forEach(([sel,k])=>{
-  $(sel).addEventListener(sel==="#fHN"||sel==="#fNote"?"input":"change", e=>{
+[["#fDate","date"],["#fRoom","room"],["#fHN","hn"],["#fPName","pname"],["#fCase","caseNo"],["#fDoc","doctor"],["#fNote","note"]].forEach(([sel,k])=>{
+  $(sel).addEventListener(sel==="#fHN"||sel==="#fNote"||sel==="#fPName"?"input":"change", e=>{
     S.draft[k]=e.target.value.trim? e.target.value.trim() : e.target.value;
     if (k==="start"||k==="end"){ recomputeAuto(); renderTime(); renderItems(); }
     if ((k==="room"||k==="date") && !S.draft.id){ S.draft.caseNo=""; suggestCaseNo(); }
@@ -743,6 +746,7 @@ $("#clearBtn").addEventListener("click",()=>{
   $("#doClear").onclick=()=>{ resetDraft(); closeModal(); };
 });
 $("#fCase").addEventListener("input",()=>{ if($("#fCase").value) $("#fCase").classList.remove("need"); });
+["#fPName","#fHN"].forEach(q=>$(q).addEventListener("input",()=>{ if($(q).value.trim()) $(q).classList.remove("need"); }));
 $("#fDoc").addEventListener("change",()=>$("#fDoc").classList.toggle("need",!$("#fDoc").value));
 $("#closeEdit").addEventListener("click",()=>{ $("#fType").classList.remove("need"); resetDraft(); setTab("room"); toast("ออกจากการแก้ไขแล้ว ไม่มีการเปลี่ยนแปลง"); });
 function resetDraft(){ const room=S.draft.room, date=S.draft.date; S.draft=newDraft(); S.draft.room=room; S.draft.date=date; saveDraft(); S.grp=null; renderSend(); }
@@ -756,6 +760,7 @@ function validate(){
   const m=minutesBetween(d.start,d.end), timed=d.anesType && d.anesType!=="OTHER";
   if (!d.room) errs.push("ยังไม่ได้เลือกจุดบริการ");
   if (!d.hn) errs.push("ยังไม่ได้กรอก HN");
+  if (!d.pname) errs.push("ยังไม่ได้กรอกชื่อผู้ป่วย");
   if (!d.caseNo) errs.push("ยังไม่ได้ระบุลำดับเคส");
   if (!its.length) errs.push("ยังไม่ได้เลือกรายการ");
   if (!d.doctor) errs.push("ยังไม่ได้เลือก Dr.Anes");
@@ -789,18 +794,20 @@ $("#reviewBtn").addEventListener("click", async ()=>{
   const {errs,warns,its,m}=validate(), d=S.draft;
   $("#fDoc").classList.toggle("need", !d.doctor);
   const noType = !d.parentId && !d.anesType;
-  const noStart = !d.parentId && !d.start, noEnd = !d.parentId && !d.end, noCase = !d.caseNo, noDoc = !d.doctor;
+  const noStart = !d.parentId && !d.start, noEnd = !d.parentId && !d.end, noCase = !d.caseNo, noDoc = !d.doctor, noPn = !d.pname, noHn = !d.hn;
   $("#fCase").classList.toggle("need", noCase);
+  $("#fPName").classList.toggle("need", noPn); $("#fHN").classList.toggle("need", noHn);
   $("#fType").classList.toggle("need", noType);
   $("#fStart").classList.toggle("need", noStart); $("#fEnd").classList.toggle("need", noEnd);
-  if (noCase || noType || noStart || noEnd || noDoc){
-    const first = noCase ? $("#fCase") : (noStart||noEnd) ? $(noStart?"#fStart":"#fEnd") : noDoc ? $("#fDoc").parentNode : $("#fType");
+  if (noCase || noPn || noHn || noType || noStart || noEnd || noDoc){
+    const first = noCase ? $("#fCase") : noPn ? $("#fPName") : noHn ? $("#fHN") : (noStart||noEnd) ? $(noStart?"#fStart":"#fEnd") : noDoc ? $("#fDoc").parentNode : $("#fType");
     first.scrollIntoView({behavior:"smooth",block:"center"});
-    toast("กรุณา" + [noCase?"ใส่เลขเคสที่":"", (noStart||noEnd)?"กรอกเวลาเริ่ม/สิ้นสุด":"", noDoc?"เลือก Dr.Anes":"", noType?"เลือกชนิดการระงับความรู้สึก":""].filter(Boolean).join(" และ ") + " ก่อนส่ง");
+    toast("กรุณา" + [noCase?"ใส่เลขเคสที่":"", noPn?"ใส่ชื่อผู้ป่วย":"", noHn?"ใส่ HN":"", (noStart||noEnd)?"กรอกเวลาเริ่ม/สิ้นสุด":"", noDoc?"เลือก Dr.Anes":"", noType?"เลือกชนิดการระงับความรู้สึก":""].filter(Boolean).join(" และ ") + " ก่อนส่ง");
     return;
   }
   openModal(`<h3>${d.id?"ตรวจก่อนบันทึกการแก้ไข":"ตรวจก่อนส่ง"}</h3>
     <div class="sheet-h"><div class="kv"><span>จุด</span><span>${esc(d.room)} · เคส ${esc(d.caseNo)}</span></div>
+    <div class="kv"><span>ชื่อผู้ป่วย</span><span class="nm-pt">${esc(d.pname||"—")}</span></div>
     <div class="kv"><span>HN</span><span class="mono">${esc(d.hn||"—")}</span></div>
     <div class="kv"><span>Dr.Anes</span><span class="nm-doc">${esc(d.doctor||"—")}</span></div>
     <div class="kv"><span>ชนิด</span><span>${esc(anesLabel(d.anesType)||"—")}</span></div>
@@ -813,7 +820,7 @@ $("#reviewBtn").addEventListener("click", async ()=>{
     </div>`);
   $("#doSend").onclick = async ()=>{
     const b=$("#doSend"); b.disabled=true; b.innerHTML='<span class="spin"></span> กำลังส่ง';
-    const c = {id:d.id, date:d.date, room:d.room, caseNo:String(d.caseNo), hn:d.hn, anesType:d.anesType, start:d.start, end:d.end, minutes:m, items:its, note:d.note, doctor:d.doctor||"", sender:settings.name, parentId:d.parentId||""};
+    const c = {id:d.id, date:d.date, room:d.room, caseNo:String(d.caseNo), hn:d.hn, pname:d.pname||"", anesType:d.anesType, start:d.start, end:d.end, minutes:m, items:its, note:d.note, doctor:d.doctor||"", sender:settings.name, parentId:d.parentId||""};
     try{
       await api("save",{case:c});
       its.forEach(i=>{ if(!i.auto) S.usage[i.id]=(S.usage[i.id]||0)+1; }); lsSet("ab_usage",S.usage);
@@ -829,7 +836,7 @@ function caseCard(c, sel){
   const n=(c.items||[]).length;
   return `<button type="button" class="case s-${c.status} ${sel?"sel":""}" data-id="${c.id}">
     <div class="case-top"><span class="case-room">${esc(c.room)} · เคส ${esc(c.caseNo)}</span>${stPill(c.status)}</div>
-    <div class="case-sub"><span class="mono">HN ${esc(c.hn)}</span><span>${esc(anesLabel(c.anesType)||"—")}</span>${c.doctor?`<span class="nm nm-doc">${esc(c.doctor)}</span>`:""}<span>${n} รายการ</span>${c.parentId?'<span class="tag">รายการเพิ่ม</span>':""}</div>
+    <div class="case-sub">${c.pname?`<span class="nm-pt">${esc(c.pname)}</span>`:""}<span class="mono">HN ${esc(c.hn)}</span><span>${esc(anesLabel(c.anesType)||"—")}</span>${c.doctor?`<span class="nm nm-doc">${esc(c.doctor)}</span>`:""}<span>${n} รายการ</span>${c.parentId?'<span class="tag">รายการเพิ่ม</span>':""}</div>
     <div class="case-sub"><span>ส่ง ${hm(c.sentAt)} <span class="nm nm-send">${esc(c.sender||"")}</span></span>${c.keyer?`<span>คีย์ <span class="nm ${keyerCls(c)}">${esc(c.keyer)}</span> ${hm(c.keyedAt||c.keyStart)}</span>`:""}</div>
     ${c.status==="returned"&&c.returnReason?`<div class="reason">${esc(c.returnReason)}</div>`:""}
     ${c.status==="cancelled"&&c.cancelReason?`<div class="reason" style="background:var(--mute-soft);color:var(--muted)">ยกเลิกโดย ${esc(c.cancelledBy||"")}: ${esc(c.cancelReason)}</div>`:""}
@@ -849,7 +856,7 @@ $("#roomCases").addEventListener("click",e=>{ const b=e.target.closest(".case");
 function openSenderCase(c){
   const canEdit=EDITABLE.includes(c.status), canAdd=["keying","done"].includes(c.status);
   openModal(`<div class="row" style="justify-content:space-between"><h3 style="margin:0">${esc(c.room)} · เคส ${esc(c.caseNo)}</h3>${stPill(c.status)}</div>
-    <div class="sheet-h" style="margin-top:10px"><div class="kv"><span>HN</span><span class="mono">${esc(c.hn)}</span></div>
+    <div class="sheet-h" style="margin-top:10px"><div class="kv"><span>ชื่อผู้ป่วย</span><span class="nm-pt">${esc(c.pname||"—")}</span></div><div class="kv"><span>HN</span><span class="mono">${esc(c.hn)}</span></div>
     <div class="kv"><span>Dr.Anes</span><span class="nm-doc">${esc(c.doctor||"—")}</span></div><div class="kv"><span>ชนิด</span><span>${esc(anesLabel(c.anesType)||"—")}</span></div>
     <div class="kv"><span>เวลา</span><span>${c.start||"—"}–${c.end||"—"}</span></div>
     <div class="kv"><span>ผู้ส่ง</span><span class="nm-send">${esc(c.sender||"")}</span></div>${c.keyer?`<div class="kv"><span>ผู้คีย์</span><span class="${keyerCls(c)}">${esc(c.keyer)}</span></div>`:""}</div>
@@ -871,7 +878,7 @@ function openSenderCase(c){
 }
 function loadIntoDraft(c, addMore){
   const d=newDraft();
-  Object.assign(d,{date:c.date,room:c.room,caseNo:c.caseNo,hn:c.hn,doctor:c.doctor||""});
+  Object.assign(d,{date:c.date,room:c.room,caseNo:c.caseNo,hn:c.hn,pname:c.pname||"",doctor:c.doctor||""});
   if (addMore){ d.parentId=c.parentId||c.id; d.anesType=""; }
   else {
     Object.assign(d,{id:c.id,anesType:c.anesType,start:c.start,end:c.end,note:c.note,parentId:c.parentId||"",returnReason:c.status==="returned"?c.returnReason:""});
@@ -932,6 +939,7 @@ function renderSheet(c){
       ${mine?`<span class="kmine">● คุณกำลังคีย์เคสนี้</span>`:""}</div>${stPill(c.status)}</div>
     <div class="sheet-h">
       <span class="big">${esc(c.room)} · เคส ${esc(c.caseNo)}</span>
+      <div class="kv"><span>ชื่อผู้ป่วย</span><span class="nm-pt" style="font-size:20px">${esc(c.pname||"—")}</span></div>
       <div class="kv"><span>HN</span><span class="mono" style="font-size:20px">${esc(c.hn)}</span></div>
       <div class="kv"><span>Dr.Anes</span><span class="nm-doc">${esc(c.doctor||"—")}</span></div><div class="kv"><span>ชนิด</span><span>${esc(anesLabel(c.anesType)||"—")}</span></div>
       <div class="kv"><span>เวลา</span><span>${c.start||"—"}–${c.end||"—"} (${durTxt(c.minutes===""?null:c.minutes)})</span></div>
@@ -1020,8 +1028,8 @@ $("#expBtn").addEventListener("click", async ()=>{
   msg.innerHTML='<span class="spin"></span> กำลังเตรียมไฟล์';
   try{
     const cs=(await api("list",{month:mo})).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:ROOMS.indexOf(a.room)-ROOMS.indexOf(b.room)||(+a.caseNo-+b.caseNo));
-    const caseRows=cs.map(c=>({"วันที่":c.date,"จุดบริการ":c.room,"เคสที่":+c.caseNo||c.caseNo,"HN":c.hn,"Dr.Anes":c.doctor||"","ชนิด":anesLabel(c.anesType),"เริ่ม":c.start,"สิ้นสุด":c.end,"นาที":c.minutes,"จำนวนรายการ":(c.items||[]).length,"สถานะ":STATUS[c.status]||c.status,"ผู้ส่ง":c.sender,"เวลาส่ง":hm(c.sentAt),"ผู้คีย์":c.keyer||"","เวลาคีย์เสร็จ":hm(c.keyedAt),"เหตุผลส่งกลับ":c.returnReason||"","เหตุผลยกเลิก":c.cancelReason||"","รายการเพิ่ม":c.parentId?"ใช่":"","หมายเหตุ":c.note||""}));
-    const itemRows=[]; cs.forEach(c=>(c.items||[]).forEach(i=>itemRows.push({"วันที่":c.date,"จุดบริการ":c.room,"เคสที่":+c.caseNo||c.caseNo,"HN":c.hn,"หมวด":i.sec==="anes"?"วิสัญญี":i.sec==="dx"?"การวินิจฉัย":"ยา/เวชภัณฑ์","รหัส":i.code,"รายการ":i.name,"จำนวน":+i.qty,"อัตโนมัติ":i.auto?"ใช่":"","สถานะเคส":STATUS[c.status]||c.status,"ผู้คีย์":c.keyer||""})));
+    const caseRows=cs.map(c=>({"วันที่":c.date,"จุดบริการ":c.room,"เคสที่":+c.caseNo||c.caseNo,"ชื่อผู้ป่วย":c.pname||"","HN":c.hn,"Dr.Anes":c.doctor||"","ชนิด":anesLabel(c.anesType),"เริ่ม":c.start,"สิ้นสุด":c.end,"นาที":c.minutes,"จำนวนรายการ":(c.items||[]).length,"สถานะ":STATUS[c.status]||c.status,"ผู้ส่ง":c.sender,"เวลาส่ง":hm(c.sentAt),"ผู้คีย์":c.keyer||"","เวลาคีย์เสร็จ":hm(c.keyedAt),"เหตุผลส่งกลับ":c.returnReason||"","เหตุผลยกเลิก":c.cancelReason||"","รายการเพิ่ม":c.parentId?"ใช่":"","หมายเหตุ":c.note||""}));
+    const itemRows=[]; cs.forEach(c=>(c.items||[]).forEach(i=>itemRows.push({"วันที่":c.date,"จุดบริการ":c.room,"เคสที่":+c.caseNo||c.caseNo,"ชื่อผู้ป่วย":c.pname||"","HN":c.hn,"หมวด":i.sec==="anes"?"วิสัญญี":i.sec==="dx"?"การวินิจฉัย":"ยา/เวชภัณฑ์","รหัส":i.code,"รายการ":i.name,"จำนวน":+i.qty,"อัตโนมัติ":i.auto?"ใช่":"","สถานะเคส":STATUS[c.status]||c.status,"ผู้คีย์":c.keyer||""})));
     const roomRows=tally(cs).map(r=>({"จุดบริการ":r.room,"เคส":r.total,"คีย์แล้ว":r.done,"ค้าง":r.pending+r.keying+r.returned,"ยกเลิก":r.cancelled,"รายการ":r.items}));
     const wb=XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(caseRows),"เคส");
